@@ -180,7 +180,20 @@ export default function OpdMedicineUpdate({ id }) {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (showAddDropdown && medicineHighlightIndex >= 0 && medicineHighlightIndex < addResults.length) {
-        selectMedicine(addResults[medicineHighlightIndex]);
+        const med = addResults[medicineHighlightIndex];
+        const newForm = {
+          medicine_name: med.medicine_name,
+          medicine_id: med.id,
+          quantity: med.quantity || "10",        
+          doses: med.dosage || "1-0-1",            
+          intake_type: med.meal_time || "After Meal"    
+        };
+        setForm(newForm);
+        setShowAddDropdown(false);
+        // Automatically add when Enter is pressed on the dropdown
+        handleAdd(newForm);
+      } else if (form.medicine_name.trim() && form.quantity && form.doses && form.intake_type) {
+        handleAdd();
       } else {
         quantityInputRef.current?.focus();
       }
@@ -200,20 +213,21 @@ export default function OpdMedicineUpdate({ id }) {
     }
   };
 
-  const handleAdd = async () => {
-    if (!form.medicine_name.trim() || !form.quantity || !form.doses || !form.intake_type) {
-      alert("Please fill all fields: Medicine, Quantity, Doses, and Intake Type");
+  const handleAdd = async (overrideForm = null) => {
+    const currentForm = overrideForm || form;
+    if (!currentForm.medicine_name.trim() || !currentForm.quantity || !currentForm.doses || !currentForm.intake_type) {
+      if (!overrideForm) alert("Please fill all fields: Medicine, Quantity, Doses, and Intake Type");
       return;
     }
 
     try {
       setLoading({ add: true });
-      const result = await findOrCreateMedicine(form.medicine_name, form.quantity, form.doses, form.intake_type);
+      const result = await findOrCreateMedicine(currentForm.medicine_name, currentForm.quantity, currentForm.doses, currentForm.intake_type);
       const newEntry = {
         medicine_data: result.id,
-        quantity: form.quantity,
-        doses: form.doses,
-        intake_type: form.intake_type
+        quantity: currentForm.quantity,
+        doses: currentForm.doses,
+        intake_type: currentForm.intake_type
       };
 
       // The backend appends new entries when using updateOpd with given_medicine,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, Fragment } from "react";
-import { ChevronUp, ChevronDown, Edit2, X, Check, Search, Calendar, Activity, Plus, Phone } from "lucide-react";
+import { ChevronUp, ChevronDown, Edit2, X, Check, Search, Calendar, Activity, Plus, Phone, User, FolderPlus } from "lucide-react";
 import { getOpdById, updateOpd, opdVisitById } from "../services/opd.services";
 import { getServices, createService } from "../services/service.services";
 import { getDoctors } from "../services/doctor.services";
@@ -27,6 +27,7 @@ export default function OpdInfoUpdate({ id, navigate }) {
   const [editMode, setEditMode] = useState(false);
   const [visitHistory, setVisitHistory] = useState([]);
   const [visitCount, setVisitCount] = useState(0);
+  const [showVisitDetails, setShowVisitDetails] = useState(false);
 
   // EDIT FORM STATE
   const [editForm, setEditForm] = useState({
@@ -347,77 +348,78 @@ export default function OpdInfoUpdate({ id, navigate }) {
   };
 
   return (
-  
-    <div className="max-w-full overflow-x-hidden pt-0 pb-2">
-      {/* SLIM STICKY HEADER - Fully Responsive */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 px-3 py-2 flex flex-col md:flex-row items-center justify-between gap-3 shadow-sm">
-        
-        {/* Left Section: Patient Primary Info */}
-        <div className="flex items-center justify-between w-full md:w-auto gap-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-[17px] font-bold text-gray-900 truncate leading-none">
-              {opd.patient_name || 'Unknown'}
-              <span className="text-gray-500 font-medium ml-1.5 text-sm uppercase">
-                ({opd.age || 'N/A'} Y, {opd.gender || 'N/A'})
-              </span>
-            </h1>
-          </div>
-        </div>
-
-        {/* Middle Section: Metadata (ID, SR, Phone, Visit, Doctor) */}
-        <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1.5 text-[13px] font-medium text-gray-500 w-full md:w-auto border-t md:border-t-0 pt-2 md:pt-0">
-          <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-            <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">ID</span>
-            <span className="text-gray-800 font-bold">{id}</span>
-          </div>
-          <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-            <span className="text-gray-400 font-bold text-[9px] uppercase tracking-tighter">SR</span>
-            <span className="text-gray-800 font-bold">{opd.sr_no || 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-            <span className="text-blue-400 font-bold text-[9px] uppercase tracking-tighter">Visit</span>
-            <span className="text-blue-700 font-bold">{visitCount}{visitCount === 1 ? 'st' : visitCount === 2 ? 'nd' : visitCount === 3 ? 'rd' : 'th'}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-400 font-bold text-[10px] uppercase">Phone</span>
-            <span className="text-gray-800 font-semibold">{opd.mobile_no || 'N/A'}</span>
-          </div>
-          {opd.doctor_data?.doctor_name && (
-            <div className="flex items-center gap-1 border-l pl-4 border-gray-200">
-              <span className="text-gray-400 font-bold text-[10px] uppercase">Doctor</span>
-              <span className="text-blue-600 font-bold truncate max-w-[120px]" title={opd.doctor_data.doctor_name}>
-                {opd.doctor_data.doctor_name.toLowerCase().startsWith('dr') ? opd.doctor_data.doctor_name : `Dr ${opd.doctor_data.doctor_name}`}
-              </span>
+    <div className="">
+      {/* CONSOLIDATED HEADER - Single Bar Design */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex items-center p-3 justify-between gap-4">
+          
+          {/* 1. Left: Patient Details Block */}
+          <div className="flex items-center flex-shrink-0">
+            {/* Patient Details Stack */}
+            <div>
+              <h1 className="text-[16px] font-bold text-gray-800 leading-tight uppercase">
+                {opd.patient_name || 'Unknown'} ({opd.age || 'N/A'} Y, {opd.gender || 'N/A'})
+              </h1>
+              <div className="text-[12px] font-semibold text-gray-500 mt-0.5">
+                {id} <span className="mx-1 text-gray-300">|</span> {opd.sr_no || 'N/A'} <span className="mx-1 text-gray-300">|</span> {opd.mobile_no || 'N/A'}
+              </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Right Section: Page Actions */}
-        <div className="flex items-center justify-end w-full md:w-auto gap-2 border-t md:border-t-0 pt-2 md:pt-0">
-          {!editMode ? (
-            <>
-              <button
-                onClick={startEdit}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded font-bold text-xs transition-all uppercase flex items-center gap-1.5 shadow-sm"
-              >
-                <Edit2 size={13} />
-                Edit
-              </button>
-              <button
-                onClick={() => navigate && navigate(-1)}
-                className="bg-white hover:bg-gray-50 border border-gray-300 px-5 py-1.5 rounded text-gray-600 font-bold text-xs transition-all uppercase shadow-sm"
-              >
-                Back
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditMode(false)}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-1.5 rounded font-bold text-xs transition-all uppercase shadow-sm"
-            >
-              Cancel
-            </button>
-          )}
+          {/* 2. Middle: Visit Information Block */}
+          <div className="flex items-center flex-grow justify-center border-l border-r border-gray-100 px-6 h-12">
+            <div className="flex flex-col items-center">
+              <div>
+                <h2 className="text-[15px] font-bold text-gray-800 leading-tight">
+                  {visitCount}{visitCount === 1 ? 'st' : visitCount === 2 ? 'nd' : visitCount === 3 ? 'rd' : 'th'} Visit
+                </h2>
+                <div className="text-[12px] font-semibold text-gray-500 mt-0.5">
+                  {formatDate(opd.date)} <span className="mx-1 text-gray-300">|</span> {opd.sr_no || 'N/A'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Right: Doctor & Actions */}
+          <div className="flex items-center gap-6 flex-shrink-0">
+            {/* Doctor Info */}
+            {opd.doctor_data?.doctor_name && (
+              <div className="hidden lg:flex flex-col items-end">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">Assigned Doctor</span>
+                <span className="text-blue-600 font-bold text-[13px] leading-none">
+                  {opd.doctor_data.doctor_name.toLowerCase().startsWith('dr') ? opd.doctor_data.doctor_name : `Dr ${opd.doctor_data.doctor_name}`}
+                </span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {!editMode ? (
+                <>
+                  <button
+                    onClick={startEdit}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-[11px] transition-all uppercase flex items-center gap-1.5 shadow-sm active:scale-95"
+                  >
+                    <Edit2 size={13} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => navigate && navigate(-1)}
+                    className="bg-white hover:bg-gray-50 border border-gray-300 px-4 py-1.5 rounded-lg text-gray-600 font-bold text-[11px] transition-all uppercase shadow-sm active:scale-95"
+                  >
+                    Back
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setEditMode(false)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-5 py-1.5 rounded-lg font-bold text-[11px] transition-all uppercase shadow-sm active:scale-95"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -345,19 +345,19 @@ export default function OpdFooterSummary({ id }) {
         </div>
 
         {/* FOOTER ACTIONS - Fixed at bottom, respecting sidebar */}
-        <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] md:ml-[200px]">
+        <div className="fixed bottom-0 left-0 right-0 z-[9999] py-2 px-4 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] md:ml-[200px]">
           <div className="max-w-7xl mx-auto flex justify-end gap-3 px-4">
             <button 
               onClick={() => navigate(`/opd-prescription/${id}`)} 
-              className="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[14px] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 active:scale-[0.98]"
+              className="px-5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 active:scale-[0.98]"
             >
-              <Printer size={18} /> Print Prescription
+              <Printer size={16} /> Print Prescription
             </button>
-            <button onClick={() => fetchOpd()} className="px-8 py-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-bold text-[14px] transition-all flex items-center gap-2">
-              <X size={18} /> Cancel
+            <button onClick={() => fetchOpd()} className="px-6 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-bold text-[13px] transition-all flex items-center gap-2">
+              <X size={16} /> Cancel
             </button>
-            <button onClick={handleSave} disabled={loading} className="px-10 py-2.5 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-[14px] transition-all flex items-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50 active:scale-[0.98]">
-              {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div> : <Check size={18} />}
+            <button onClick={handleSave} disabled={loading} className="px-8 py-1.5 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50 active:scale-[0.98]">
+              {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full"></div> : <Check size={16} />}
               Save Changes
             </button>
           </div>

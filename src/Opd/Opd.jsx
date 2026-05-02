@@ -121,8 +121,16 @@ export default function Opd() {
     setTotalCount(total);
     setTotalPages(Math.ceil(total / itemsPerPage));
 
-    // After successfully fetching current page, calculate summary asynchronously
-    calculateCollectionSummary();
+    // 🔹 Use backend summary if available, otherwise default to 0
+    // This avoids the expensive manual calculation loop
+    const backendSummary = res?.data?.summary || {};
+    setSummary({
+      grandTotal: parseFloat(backendSummary.grand_total || 0),
+      cash: parseFloat(backendSummary.cash_total || 0),
+      upi: parseFloat(backendSummary.upi_total || 0),
+      remaining: parseFloat(backendSummary.remaining_total || 0),
+      loading: false
+    });
 
   } catch (err) {
     console.error(err);
@@ -132,80 +140,7 @@ export default function Opd() {
   }
 }, [currentPage, search, searchType, fromDate, toDate]);
 
-  /* ------------------ Calculate Summary ------------------ */
-  const calculateCollectionSummary = async () => {
-    setSummary(prev => ({ ...prev, loading: true }));
-    try {
-      let page = 1;
-      let hasNext = true;
-      let allRecords = [];
 
-      while (hasNext) {
-        const params = { page, page_size: 100 }; // Use larger page size for faster fetching if supported
-        if (fromDate) params.start_date = fromDate;
-        if (toDate) params.end_date = toDate;
-        
-        const res = await getOpds(params);
-        const data = res?.data?.data || [];
-        allRecords = [...allRecords, ...data];
-        
-        // Break if no next page or we hit a high limit to prevent infinite loops
-        hasNext = res?.data?.next !== null && page < 500;
-        page++;
-      }
-
-      let grandTotal = 0;
-      let cash = 0;
-      let upi = 0;
-      let remaining = 0;
-
-      allRecords.forEach((record, index) => {
-        if (!record.is_delete) {
-            const amount = parseFloat(record.total_amount) || 0;
-            grandTotal += amount;
-            
-            // Debug the first few records to see what the API actually returns
-            if (index < 3) {
-                console.log("Debugging Record Data:", {
-                    id: record.id,
-                    total_amount: record.total_amount,
-                    is_received: record.is_received,
-                    payment_mode: record.payment_mode
-                });
-            }
-            
-            // Extremely robust check for 'received' status
-            const isReceived = 
-                record.is_received === 1 || 
-                record.is_received === '1' || 
-                record.is_received === true || 
-                record.is_received === 'true' ||
-                record.is_received === 'True' ||
-                record.is_received === 'Yes';
-            
-            if (isReceived) {
-                const mode = String(record.payment_mode || '').trim().toLowerCase();
-                
-                if (mode === 'cash') {
-                    cash += amount;
-                } else if (mode === 'upi') {
-                    upi += amount;
-                } else {
-                    // If marked received but mode is blank/unknown, default to Cash to ensure it doesn't get lost
-                    cash += amount;
-                }
-            } else {
-                remaining += amount;
-            }
-        }
-      });
-
-      setSummary({ grandTotal, cash, upi, remaining, loading: false });
-    } catch (err) {
-      console.error("Failed to calculate summary:", err);
-      setSummary(prev => ({ ...prev, loading: false }));
-    }
-  };
 
   // Debounced search
   useEffect(() => {
@@ -529,92 +464,79 @@ export default function Opd() {
           </div>
         </div>
 
-        {/* Main Content Layout: Side-by-side Summary and Table */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-          
-          {/* Left Column: Collection Summary UI (Image 1 Style) */}
-          <div className="xl:col-span-1 bg-white rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden relative sticky top-6">
-          
+        {/* Collection Summary Dashboard - Compact Horizontal Row */}
+        <div className="relative">
           {summary.loading && (
-             <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
-               <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-             </div>
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-2xl">
+              <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
           )}
 
-          <div className="p-6">
-            {/* Header Section */}
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center border border-green-100">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                </div>
-                <div>
-                  <h2 className="text-[22px] font-bold text-gray-900 leading-tight">Today's Collection</h2>
-                  <p className="text-green-600 text-[13px] font-medium mt-0.5">
-                    From server • {totalCount} total
-                  </p>
-                </div>
-              </div>
-              <button className="flex items-center gap-2 text-green-600 font-semibold text-sm border border-green-200 bg-green-50/50 hover:bg-green-50 px-4 py-2 rounded-lg transition-all">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Payments
-              </button>
-            </div>
+          <div className="flex justify-between items-end mb-4">
+             <div>
+               <h2 className="text-xl font-bold text-gray-800">Today's Collection</h2>
+               <p className="text-gray-500 text-xs font-medium mt-0.5">
+                 From server • {totalCount} patients today
+               </p>
+             </div>
+             <div className="flex gap-2">
+               <button className="flex items-center gap-2 text-blue-600 font-semibold text-xs border border-blue-200 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all">
+                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                 Payments
+               </button>
+               <a href="#" className="flex items-center gap-1 text-gray-500 hover:text-blue-600 text-xs font-semibold px-3 py-1.5 transition-all">
+                 Full History &rarr;
+               </a>
+             </div>
+          </div>
 
-            <div className="w-full h-px bg-gray-100 mb-6"></div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {/* Grand Total */}
-            <div className="bg-[#eff6ff] rounded-[16px] p-5 flex items-center gap-4 mb-4 border border-[#bfdbfe]/50">
-              <div className="text-blue-600 text-4xl font-light">₹</div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 text-blue-600 font-bold text-lg">₹</div>
               <div>
-                <p className="text-blue-600 text-sm font-semibold mb-1">Grand Total</p>
-                <h3 className="text-blue-700 text-[32px] font-bold leading-none">₹{summary.grandTotal.toLocaleString('en-IN')}</h3>
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Grand Total</p>
+                <h3 className="text-blue-700 text-xl font-bold leading-none mt-1">₹{summary.grandTotal.toLocaleString('en-IN')}</h3>
               </div>
             </div>
 
-            {/* Cash & UPI Split */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-[#f0fdf4] rounded-[16px] p-5 flex items-center gap-4 border border-green-100/50">
-                <div className="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center">
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                </div>
-                <div>
-                  <p className="text-green-700 text-sm font-semibold mb-1">Cash</p>
-                  <h3 className="text-green-700 text-xl font-bold leading-none">₹{summary.cash.toLocaleString('en-IN')}</h3>
-                </div>
+            {/* Cash */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center border border-green-100">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
               </div>
-
-              <div className="bg-[#faf5ff] rounded-[16px] p-5 flex items-center gap-4 border border-purple-100/50">
-                <div className="w-8 h-8 text-purple-600 flex items-center justify-center">
-                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                </div>
-                <div>
-                  <p className="text-purple-700 text-sm font-semibold mb-1">UPI</p>
-                  <h3 className="text-purple-700 text-xl font-bold leading-none">₹{summary.upi.toLocaleString('en-IN')}</h3>
-                </div>
+              <div>
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Cash</p>
+                <h3 className="text-green-700 text-xl font-bold leading-none mt-1">₹{summary.cash.toLocaleString('en-IN')}</h3>
               </div>
             </div>
 
-            {/* Amount Remaining */}
-            <div className="bg-[#fef2f2] rounded-[16px] p-4 flex items-center justify-between border border-red-100/50">
-              <div className="flex items-center gap-3">
+            {/* UPI */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center border border-purple-100">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">UPI</p>
+                <h3 className="text-purple-700 text-xl font-bold leading-none mt-1">₹{summary.upi.toLocaleString('en-IN')}</h3>
+              </div>
+            </div>
+
+            {/* Remaining */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+              <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center border border-red-100">
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
-                <span className="text-red-700 text-[15px] font-semibold">Amount Remaining</span>
               </div>
-              <span className="text-red-700 text-[18px] font-bold">₹{summary.remaining.toLocaleString('en-IN')}</span>
-            </div>
-
-            {/* Footer Link */}
-            <div className="mt-5 text-right">
-              <a href="#" className="text-[#3b82f6] hover:text-blue-700 text-sm font-medium hover:underline inline-flex items-center gap-1 transition-colors">
-                View Full Payment History <span className="text-lg leading-none">&rarr;</span>
-              </a>
+              <div>
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Remaining</p>
+                <h3 className="text-red-700 text-xl font-bold leading-none mt-1">₹{summary.remaining.toLocaleString('en-IN')}</h3>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Right Column: Error & Table Card */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className="space-y-6">
           {/* Error Message */}
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md">
@@ -772,8 +694,7 @@ export default function Opd() {
             Showing all {totalCount} records
           </div>
         )}
-        </div> {/* End Right Column */}
-        </div> {/* End Main Content Grid */}
+        </div>
       </div>
     </div>
   );

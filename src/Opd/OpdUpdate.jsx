@@ -19,7 +19,7 @@ export default function OpdUpdate() {
   return (
     <div className="max-w-7xl mx-auto pb-8">
       {/* 1. Sticky Header - Compact Patient Information */}
-      <div className="sticky top-0 z-[100] bg-gray-50/80 backdrop-blur-md pb-1 -mx-4 px-4 border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-[100]">
         <OpdInfoUpdate id={id} navigate={navigate} />
       </div>
 
