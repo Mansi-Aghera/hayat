@@ -1,0 +1,204 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  button, input, select, textarea {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  body {
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(99, 102, 241, 0.18), transparent 60%),
+      radial-gradient(900px 500px at 90% 20%, rgba(236, 72, 153, 0.16), transparent 55%),
+      radial-gradient(900px 500px at 30% 90%, rgba(34, 197, 94, 0.12), transparent 55%),
+      linear-gradient(180deg, rgba(248, 250, 252, 1), rgba(241, 245, 249, 1));
+  }
+}
+
+@layer utilities {
+  @keyframes hp-float {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(0, -10px, 0) scale(1.02);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes hp-pop {
+    0% {
+      transform: translate3d(0, 10px, 0) scale(0.98);
+      opacity: 0;
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes hp-shimmer {
+    0% {
+      transform: translateX(-120%);
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.35;
+    }
+    60% {
+      opacity: 0.18;
+    }
+    100% {
+      transform: translateX(120%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes hp-gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .hp-animate-pop {
+    animation: hp-pop 700ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  }
+
+  .hp-animate-float {
+    animation: hp-float 5.5s ease-in-out infinite;
+  }
+
+  .hp-animate-gradient {
+    background-size: 180% 180%;
+    animation: hp-gradient 10s ease infinite;
+  }
+
+  .hp-surface {
+    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_12px_40px_rgba(15,23,42,0.12)] rounded-2xl;
+  }
+
+  .hp-page {
+    @apply min-h-screen py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden;
+  }
+
+  .hp-page-bg {
+    @apply pointer-events-none absolute inset-0 overflow-hidden;
+  }
+
+  .hp-blob {
+    @apply absolute rounded-full blur-3xl opacity-60;
+    filter: blur(64px);
+  }
+
+  .hp-table-wrap {
+    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_12px_40px_rgba(15,23,42,0.12)] rounded-2xl overflow-hidden;
+  }
+}
+
+@layer components {
+  .hp-action-btn {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold border transition-all duration-200 select-none;
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+  }
+
+  .hp-action-btn:active {
+    transform: scale(0.96);
+  }
+
+  .hp-action-edit {
+    @apply text-indigo-700 border-indigo-200/70 bg-indigo-50/70 hover:bg-indigo-100/80 hover:border-indigo-300;
+    box-shadow: 0 10px 26px rgba(99, 102, 241, 0.18);
+  }
+
+  .hp-action-danger {
+    @apply text-rose-700 border-rose-200/70 bg-rose-50/70 hover:bg-rose-100/80 hover:border-rose-300;
+    box-shadow: 0 10px 26px rgba(244, 63, 94, 0.16);
+  }
+
+  .hp-action-neutral {
+    @apply text-slate-700 border-slate-200/70 bg-white/60 hover:bg-slate-50/80 hover:border-slate-300;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  }
+
+  .hp-glow-btn {
+    @apply relative overflow-hidden;
+  }
+
+  .hp-glow-btn::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
+    transform: translateX(-120%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hp-glow-btn:hover::after {
+    animation: hp-shimmer 900ms ease;
+  }
+}
+
+/* Modern Colored Scrollbar for high visibility */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  border-radius: 20px;
+  border: 2px solid #f8fafc;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #4f46e5, #4338ca);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: #6366f1 #f8fafc;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
