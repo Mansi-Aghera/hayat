@@ -361,13 +361,13 @@ const handleAdd = async () => {
   };
 
   return (
-    <div className="max-w-6xl p-4">
+    <div className="w-full px-4 py-1">
       {/* ADD SECTION - Inline title + fields */}
         <>
         <div className="">
         <div className="flex items-start gap-4">
           {/* Title - inline */}
-          <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 min-w-[140px]">Past History</h2>
+          <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Past History</h2>
 
           {/* Input fields row */}
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">

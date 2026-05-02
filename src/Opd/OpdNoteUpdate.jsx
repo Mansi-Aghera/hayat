@@ -275,7 +275,7 @@ export default function OpdNoteUpdate({ id }) {
           <div className="">
             <div className="flex items-start gap-4 w-full">
               {/* Title - inline */}
-              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 min-w-[100px]">Note</h2>
+              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Note</h2>
 
               {/* Input + Button row */}
               <div className="flex-1 flex flex-col md:flex-row gap-3 items-center w-full">

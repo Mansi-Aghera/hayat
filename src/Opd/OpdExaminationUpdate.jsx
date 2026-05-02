@@ -125,20 +125,20 @@ export default function OpdExaminationUpdate({ id }) {
 
   /* ================= UI ================= */
   return (
-    <div className="max-w-6xl">
+    <div className="w-full px-4 py-1">
         <>
 
           {/* EXAMINATION FORM - Inline title + fields */}
           <div className="">
             <div className="flex items-start gap-4">
               {/* Title - inline */}
-              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Examination</h2>
+              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[150px] flex-shrink-0">Examination</h2>
 
               {/* Input fields row */}
-              <div className="flex-1 grid grid-cols-12 gap-3">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {/* RS */}
-              <div className="col-span-2 space-y-1">
-                <label className="block text-xs font-medium text-gray-700">RS</label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">RS</span>
                 <input
                   ref={rsRef}
                   type="text"
@@ -148,14 +148,14 @@ export default function OpdExaminationUpdate({ id }) {
                   }
                   onKeyDown={(e) => handleKeyDown(e, 'cvs')}
                   placeholder={placeholders.RS}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full outline-none text-sm bg-transparent"
                   autoFocus
                 />
               </div>
 
               {/* CVS */}
-              <div className="col-span-2 space-y-1">
-                <label className="block text-xs font-medium text-gray-700">CVS</label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">CVS</span>
                 <input
                   ref={cvsRef}
                   type="text"
@@ -165,13 +165,13 @@ export default function OpdExaminationUpdate({ id }) {
                   }
                   onKeyDown={(e) => handleKeyDown(e, 'cns')}
                   placeholder={placeholders.CVS}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full outline-none text-sm bg-transparent"
                 />
               </div>
 
               {/* CNS */}
-              <div className="col-span-2 space-y-1">
-                <label className="block text-xs font-medium text-gray-700">CNS</label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">CNS</span>
                 <input
                   ref={cnsRef}
                   type="text"
@@ -181,13 +181,13 @@ export default function OpdExaminationUpdate({ id }) {
                   }
                   onKeyDown={(e) => handleKeyDown(e, 'pa')}
                   placeholder={placeholders.CNS}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full outline-none text-sm bg-transparent"
                 />
               </div>
 
               {/* PA */}
-              <div className="col-span-2 space-y-1">
-                <label className="block text-xs font-medium text-gray-700">PA</label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">PA</span>
                 <input
                   ref={paRef}
                   type="text"
@@ -197,13 +197,13 @@ export default function OpdExaminationUpdate({ id }) {
                   }
                   onKeyDown={(e) => handleKeyDown(e, 'opinion')}
                   placeholder={placeholders.PA}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full outline-none text-sm bg-transparent"
                 />
               </div>
 
               {/* OPINION */}
-              <div className="col-span-4 space-y-1">
-                <label className="block text-xs font-medium text-gray-700">Opinion</label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Opinion</span>
                 <input
                   ref={opinionRef}
                   type="text"
@@ -213,7 +213,7 @@ export default function OpdExaminationUpdate({ id }) {
                   }
                   onKeyDown={(e) => handleKeyDown(e, 'save')}
                   placeholder={placeholders.opinion}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full outline-none text-sm bg-transparent"
                 />
               </div>
               </div>

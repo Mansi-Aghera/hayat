@@ -182,125 +182,105 @@ export default function OpdVitalsUpdate({ id }) {
   };
 
   return (
-    <div className="px-6">
+    <div className="w-full px-4 py-1">
       {/* COLLAPSIBLE CONTENT */}
       <div className="overflow-hidden transition-all duration-300 ease-in-out">
         {/* VITALS FORM - Inline title + fields */}
         <div className="">
           <div className="flex items-start gap-4">
             {/* Title - inline */}
-            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 min-w-[140px]">Vitals</h2>
+            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Vitals</h2>
 
-            {/* Input fields row - Added 7th column for Save Button */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+            {/* Input fields row */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
 
               {/* Blood Pressure */}
-              <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-700">
-                  Blood Pressure (BP)
-                </label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">BP</span>
                 <input
                   ref={bpRef}
                   type="text"
-                  placeholder="e.g., 120/80"
+                  placeholder="120/80"
                   value={vitals.BP}
                   onChange={(e) => handleInputChange('BP', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'pr')}
-                  className="w-full border rounded-lg px-3 py-1"
+                  className="w-full outline-none text-sm bg-transparent"
                   autoFocus
                 />
               </div>
 
               {/* Pulse Rate */}
-              <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-700">
-                  Pulse Rate (PR)
-                </label>
-                <div className="relative">
-                  <input
-                    ref={prRef}
-                    type="text"
-                    placeholder="e.g., 80"
-                    value={vitals.PR}
-                    onChange={(e) => handleInputChange('PR', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, 'spo')}
-                    className="w-full border rounded-lg px-3 py-1"
-                  />
-                  <div className="absolute right-3 top-1.5 text-gray-400 text-xs">bpm</div>
-                </div>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">PR</span>
+                <input
+                  ref={prRef}
+                  type="text"
+                  placeholder="80"
+                  value={vitals.PR}
+                  onChange={(e) => handleInputChange('PR', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'spo')}
+                  className="w-full outline-none text-sm bg-transparent"
+                />
+                <span className="text-gray-400 text-[10px] ml-1">bpm</span>
               </div>
 
               {/* Oxygen Saturation */}
-              <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-700">
-                  SpO₂
-                </label>
-                <div className="relative">
-                  <input
-                    ref={spoRef}
-                    type="text"
-                    placeholder="e.g., 98"
-                    value={vitals.SPO}
-                    onChange={(e) => handleInputChange('SPO', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, 'sugar')}
-                    className="w-full border rounded-lg px-3 py-1"
-                  />
-                  <div className="absolute right-3 top-1.5 text-gray-400 text-xs">%</div>
-                </div>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">SpO₂</span>
+                <input
+                  ref={spoRef}
+                  type="text"
+                  placeholder="98"
+                  value={vitals.SPO}
+                  onChange={(e) => handleInputChange('SPO', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'sugar')}
+                  className="w-full outline-none text-sm bg-transparent"
+                />
+                <span className="text-gray-400 text-[10px] ml-1">%</span>
               </div>
 
               {/* Blood Sugar */}
-              <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-700">
-                  Blood Sugar
-                </label>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Sugar</span>
                 <input
                   ref={sugarRef}
                   type="text"
-                  placeholder="e.g., R:110"
+                  placeholder="R:110"
                   value={vitals.Sugar}
                   onChange={(e) => handleInputChange('Sugar', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'temp')}
-                  className="w-full border rounded-lg px-3 py-1"
+                  className="w-full outline-none text-sm bg-transparent"
                 />
               </div>
 
               {/* Temperature */}
-              <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-700">
-                  Temperature
-                </label>
-                <div className="relative">
-                  <input
-                    ref={tempRef}
-                    type="text"
-                    placeholder="e.g., 98"
-                    value={vitals.Temp}
-                    onChange={(e) => handleInputChange('Temp', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, 'weight')}
-                    className="w-full border rounded-lg px-3 py-1"
-                  />
-                  <div className="absolute right-3 top-1.5 text-gray-400 text-xs">°F</div>
-                </div>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Temp</span>
+                <input
+                  ref={tempRef}
+                  type="text"
+                  placeholder="98"
+                  value={vitals.Temp}
+                  onChange={(e) => handleInputChange('Temp', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'weight')}
+                  className="w-full outline-none text-sm bg-transparent"
+                />
+                <span className="text-gray-400 text-[10px] ml-1">°F</span>
               </div>
 
               {/* Weight */}
-              <div className="space-y-2 md:col-span-2 lg:col-span-1">
-                <label className="block text-xs font-medium text-gray-700">
-                  Weight
-                </label>
-                <div className="relative">
-                  <input
-                    ref={weightRef}
-                    type="text"
-                    placeholder="e.g., 72"
-                    value={vitals.Weight}
-                    onChange={(e) => handleInputChange('Weight', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, 'save')}
-                    className="w-full border rounded-lg px-3 py-1"
-                  />
-                  <div className="absolute right-3 top-1.5 text-gray-400 text-xs">kg</div>
-                </div>
+              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Wt</span>
+                <input
+                  ref={weightRef}
+                  type="text"
+                  placeholder="72"
+                  value={vitals.Weight}
+                  onChange={(e) => handleInputChange('Weight', e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, 'save')}
+                  className="w-full outline-none text-sm bg-transparent"
+                />
+                <span className="text-gray-400 text-[10px] ml-1">kg</span>
               </div>
             </div>
           </div>

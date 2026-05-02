@@ -472,13 +472,13 @@ export default function OpdDiagnosisUpdate({ id }) {
   };
 
   return (
-    <div className="px-6 pb-2">
+    <div className="w-full px-4 py-1">
       <>
         {/* ADD SECTION - Inline title + fields */}
         <div className="">
           <div className="flex items-start gap-4">
             {/* Title - inline */}
-            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 min-w-[140px]">Diagnosis Detail</h2>
+            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Diagnosis Detail</h2>
 
             {/* Input fields row */}
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
