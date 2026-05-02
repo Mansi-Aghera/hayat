@@ -26,6 +26,30 @@ export default function OpdMedicineUpdate({ id }) {
   const dosesInputRef = useRef(null);
   const intakeTypeInputRef = useRef(null);
   const addButtonRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Auto-scroll the active option into view during keyboard navigation
+  useEffect(() => {
+    if (showAddDropdown && medicineHighlightIndex >= 0 && dropdownRef.current) {
+      const container = dropdownRef.current;
+      const activeItem = container.children[medicineHighlightIndex];
+      
+      if (activeItem) {
+        const itemTop = activeItem.offsetTop;
+        const itemBottom = itemTop + activeItem.offsetHeight;
+        const containerTop = container.scrollTop;
+        const containerBottom = containerTop + container.clientHeight;
+
+        if (itemTop < containerTop) {
+          // Scroll up to show the top of the item
+          container.scrollTop = itemTop;
+        } else if (itemBottom > containerBottom) {
+          // Scroll down to show the bottom of the item
+          container.scrollTop = itemBottom - container.clientHeight;
+        }
+      }
+    }
+  }, [medicineHighlightIndex, showAddDropdown]);
 
   useEffect(() => {
     fetchOpd();
@@ -149,7 +173,7 @@ export default function OpdMedicineUpdate({ id }) {
   const handleMedicineKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setMedicineHighlightIndex(prev => prev < addResults.length ? prev + 1 : prev);
+      setMedicineHighlightIndex(prev => prev < addResults.length - 1 ? prev + 1 : prev);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setMedicineHighlightIndex(prev => prev > 0 ? prev - 1 : 0);
@@ -230,7 +254,7 @@ export default function OpdMedicineUpdate({ id }) {
         <h2 className="text-base font-bold text-gray-700 uppercase tracking-tight">Rx (Prescription)</h2>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-visible">
         <table className="min-w-full divide-y divide-gray-200 border-y border-gray-100">
           <thead>
             <tr className="bg-gray-50/50">
@@ -258,20 +282,32 @@ export default function OpdMedicineUpdate({ id }) {
                     className="w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   {showAddDropdown && addResults.length > 0 && (
-                    <div className="absolute z-50 w-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto">
+                    <div 
+                      ref={dropdownRef}
+                      className="absolute z-[999] w-[calc(100%+40px)] -left-5 mt-2 bg-slate-50 border border-slate-300 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] max-h-80 overflow-y-auto ring-1 ring-black/5"
+                    >
                       {addResults.map((med, index) => (
                         <div
                           key={med.id}
                           onMouseDown={() => selectMedicine(med)}
                           onMouseEnter={() => setMedicineHighlightIndex(index)}
-                          className={`px-4 py-3 transition-colors cursor-pointer border-b border-gray-50 last:border-0 ${medicineHighlightIndex === index ? 'bg-blue-600 text-white' : 'hover:bg-blue-50'}`}
+                          className={`px-5 py-3 transition-all cursor-pointer border-b border-slate-100 last:border-0 flex items-center justify-between ${medicineHighlightIndex === index ? 'bg-blue-700 text-white shadow-inner' : 'hover:bg-blue-100/50'}`}
                         >
-                          <div className="font-semibold">{med.medicine_name}</div>
-                          <div className={`text-[10px] ${medicineHighlightIndex === index ? 'text-blue-100' : 'text-gray-500'}`}>
-                            {med.dosage && <span className="mr-2">Dose: {med.dosage}</span>}
-                            {med.meal_time && <span className="mr-2">• {med.meal_time}</span>}
-                            {med.quantity && <span>• Qty: {med.quantity}</span>}
+                          <div className="flex-1">
+                            <div className={`font-bold ${medicineHighlightIndex === index ? 'text-white' : 'text-slate-800'}`}>{med.medicine_name}</div>
+                            <div className={`text-[10px] mt-0.5 ${medicineHighlightIndex === index ? 'text-blue-100' : 'text-slate-500'}`}>
+                              {med.dosage && <span className="mr-2 font-medium">Dose: {med.dosage}</span>}
+                              {med.meal_time && <span className="mr-2">• {med.meal_time}</span>}
+                              {med.quantity && <span>• Qty: {med.quantity}</span>}
+                            </div>
                           </div>
+                          {medicineHighlightIndex === index && (
+                            <div className="ml-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

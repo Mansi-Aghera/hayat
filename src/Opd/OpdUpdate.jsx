@@ -24,7 +24,7 @@ export default function OpdUpdate() {
       </div>
 
       {/* 2. Main Unified Form Container */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-visible">
         <div className="p-0"> {/* No extra padding on container, handled by internal components */}
 
           {/* Chief Complaints Section */}
