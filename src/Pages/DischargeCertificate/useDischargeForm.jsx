@@ -23,7 +23,8 @@ export const useDischargeForm = (ipdId, dischargeId, isEditMode) => {
     Note: [],
     treatment_chart: [],
     Rx: [],
-    next_visit: '',
+    next_visit: [],
+    investigations: [],
     investigation: '',
     dd_note: '',
     staff_data: null,
@@ -49,6 +50,8 @@ export const useDischargeForm = (ipdId, dischargeId, isEditMode) => {
   const [clinicalNoteInput, setClinicalNoteInput] = useState({ id: '', name: '' });
   const [adviceInput, setAdviceInput] = useState({ id: '', name: '' });
   const [noteInput, setNoteInput] = useState({ id: '', name: '' });
+  const [investigationInput, setInvestigationInput] = useState({ id: '', name: '' });
+  const [nextVisitInput, setNextVisitInput] = useState('');
   
   const [treatmentForm, setTreatmentForm] = useState({
     medicine_id: '',
@@ -106,11 +109,9 @@ export const useDischargeForm = (ipdId, dischargeId, isEditMode) => {
         bed_data: ipdData.bed_data.id || null,
         doctor_data: ipdData.doctor_data.id || null,
         sr_no: ipdData.sr_no || '',
-        datetime_admission: removeMeridian(ipdData.datetime_admission)
-        // You might also want to set other fields from IPD
-        // diagnosis: ipdData.diagnosis || [],
-        // treatment_chart: ipdData.treatment_chart || [],
-        // Rx: ipdData.Rx || [],
+        datetime_admission: removeMeridian(ipdData.datetime_admission),
+        investigations: ipdData.investigation ? ipdData.investigation.split('\n').filter(Boolean).map(i => i.trim()) : [],
+        next_visit: ipdData.next_visit ? ipdData.next_visit.split('\n').filter(Boolean).map(i => i.trim()) : []
       }));
 
       toast.success('IPD patient data loaded successfully');
@@ -331,6 +332,29 @@ export const useDischargeForm = (ipdId, dischargeId, isEditMode) => {
     }));
     setClinicalNoteInput({ id: '', name: '' });
     toast.success('Clinical note added successfully');
+  };
+
+  // Investigation handlers
+  const handleAddInvestigation = async () => {
+    if (!investigationInput.name || !investigationInput.name.trim()) {
+      toast.warning('Please enter an investigation');
+      return;
+    }
+
+    const value = investigationInput.name.trim();
+
+    // Check for duplicates
+    if (formData.investigations.includes(value)) {
+      toast.warning('This investigation has already been added');
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      investigations: [...prev.investigations, value]
+    }));
+    setInvestigationInput({ id: '', name: '' });
+    toast.success('Investigation added successfully');
   };
 
   // Advice handlers
@@ -603,19 +627,34 @@ export const useDischargeForm = (ipdId, dischargeId, isEditMode) => {
       setAdviceInput,
       noteInput,
       setNoteInput,
+      investigationInput,
+      setInvestigationInput,
       treatmentForm,
       setTreatmentForm,
       rxForm,
       setRxForm,
       handleAddDiagnosis,
       handleAddClinicalNote,
+      handleAddInvestigation,
       handleAddAdvice,
       handleAddNote,
       handleTreatmentChange,
       handleAddTreatment,
       handleRxChange,
       handleAddRx,
+      handleRxChange,
+      handleAddRx,
       handleRemoveItem,
+      nextVisitInput,
+      setNextVisitInput,
+      handleAddNextVisit: () => {
+        if (!nextVisitInput.trim()) return;
+        setFormData(prev => ({
+          ...prev,
+          next_visit: [...prev.next_visit, nextVisitInput.trim()]
+        }));
+        setNextVisitInput('');
+      },
       handleCreateNewOpinion,
       handleCreateNewMedicine,
       handleCreateNewDiagnosis

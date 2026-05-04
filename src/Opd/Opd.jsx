@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Pencil, Trash2, ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getOpds, getOpdById, updateOpd } from "../services/opd.services";
@@ -14,33 +14,24 @@ const getTodayDateString = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const getWeekAgoDateString = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
+
 
 export default function Opd() {
   const navigate = useNavigate();
 
   /* ------------------ State ------------------ */
-  const [opds, setOpds] = useState([]);
+  const [rawOpds, setRawOpds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // search & filter
   const [search, setSearch] = useState("");
   const [searchType, setSearchType] = useState("patient_name"); // 'patient_name', 'mobile_number', or 'hid'
-  const [fromDate, setFromDate] = useState(getWeekAgoDateString());
+  const [fromDate, setFromDate] = useState(getTodayDateString());
   const [toDate, setToDate] = useState(getTodayDateString());
 
   // pagination
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
   // Debounce search to avoid too many API calls
@@ -55,106 +46,95 @@ export default function Opd() {
     loading: false
   });
 
-  /* ------------------ Fetch opds with pagination ------------------ */
   const fetchOpds = useCallback(async () => {
-  setLoading(true);
-  setError(null);
-
-  try {
-    // HID search: fetch single OPD by ID directly
-    if (searchType === "hid" && search.trim()) {
-      try {
-        const res = await getOpdById(search.trim());
-        const record = res?.data || res;
-        if (record && !record.is_delete) {
-          setOpds([record]);
-          setTotalCount(1);
-          setTotalPages(1);
-        } else {
-          setOpds([]);
-          setTotalCount(0);
-          setTotalPages(1);
-        }
-      } catch (err) {
-        console.error("HID search failed:", err);
-        setOpds([]);
-        setTotalCount(0);
-        setTotalPages(1);
-      }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getOpds(); // Fetches ALL pages for local filtering
+      setRawOpds(Array.isArray(data) ? data : (data.data || []));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch OPD records");
+    } finally {
       setLoading(false);
-      return;
     }
+  }, []);
 
-    const params = {
-      page: currentPage,
-      page_size: itemsPerPage,
-    };
+  useEffect(() => {
+    fetchOpds();
+  }, [fetchOpds]);
 
-    // patient search
+  /* ------------------ Local Filtering & Summary ------------------ */
+  const filteredOpds = useMemo(() => {
+    let result = [...rawOpds].filter(item => !item.is_delete);
+
+    // Search filter
     if (search.trim()) {
-      if (searchType === "patient_name") {
-        params.patient_name = search.trim();
-      } else {
-        params.mobile_number = search.trim();
+      const q = search.trim().toLowerCase();
+      if (searchType === "hid") {
+        result = result.filter(r => String(extractId(r)) === q);
+      } else if (searchType === "patient_name") {
+        result = result.filter(r => (r.patient_name || "").toLowerCase().includes(q));
+      } else if (searchType === "mobile_number") {
+        result = result.filter(r => (r.mobile_no || "").toString().includes(q));
       }
     }
 
-    // date filters
-    if (fromDate) params.start_date = fromDate;
-    if (toDate) params.end_date = toDate;
+    // Date filter - Skip if searching to allow finding patients from any date
+    const isSearching = !!search.trim();
+    if (!isSearching && (fromDate || toDate)) {
+      const start = fromDate ? new Date(fromDate + "T00:00:00") : null;
+      const end = toDate ? new Date(toDate + "T23:59:59") : null;
 
-    const res = await getOpds(params);
+      result = result.filter(r => {
+        const rDate = new Date(r.date || r.datetime);
+        if (start && rDate < start) return false;
+        if (end && rDate > end) return false;
+        return true;
+      });
+    }
 
-    console.log("API Response:", res.data);
-
-    const data = res?.data?.data || [];
-    const total = res?.data?.count || data.length;
-
-    // 🔹 Sort data by date (newest first)
-    const sortedData = [...data].sort((a, b) => {
+    // Sort newest first
+    return result.sort((a, b) => {
       const dateA = new Date(a.date || a.datetime || 0);
       const dateB = new Date(b.date || b.datetime || 0);
       return dateB - dateA;
     });
+  }, [rawOpds, search, searchType, fromDate, toDate]);
 
-    setOpds(sortedData);
-    setTotalCount(total);
-    setTotalPages(Math.ceil(total / itemsPerPage));
+  const localSummary = useMemo(() => {
+    const summaryData = {
+      grandTotal: 0,
+      cash: 0,
+      upi: 0,
+      remaining: 0
+    };
 
-    // 🔹 Use backend summary if available, otherwise default to 0
-    // This avoids the expensive manual calculation loop
-    const backendSummary = res?.data?.summary || {};
-    setSummary({
-      grandTotal: parseFloat(backendSummary.grand_total || 0),
-      cash: parseFloat(backendSummary.cash_total || 0),
-      upi: parseFloat(backendSummary.upi_total || 0),
-      remaining: parseFloat(backendSummary.remaining_total || 0),
-      loading: false
+    filteredOpds.forEach(r => {
+      const total = parseFloat(r.total_amount || 0);
+      summaryData.grandTotal += total;
+      
+      const mode = (r.payment_mode || "").toLowerCase();
+      if (mode === "cash") summaryData.cash += total;
+      else if (mode === "upi") summaryData.upi += total;
+      
+      summaryData.remaining += parseFloat(r.remaining_amount || 0);
     });
 
-  } catch (err) {
-    console.error(err);
-    setError("Failed to fetch OPD records");
-  } finally {
-    setLoading(false);
-  }
-}, [currentPage, search, searchType, fromDate, toDate]);
+    return summaryData;
+  }, [filteredOpds]);
 
+  const totalCount = filteredOpds.length;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
+  const paginatedOpds = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredOpds.slice(start, start + itemsPerPage);
+  }, [filteredOpds, currentPage]);
 
-  // Debounced search
   useEffect(() => {
-  if (searchTimeout.current) {
-    clearTimeout(searchTimeout.current);
-  }
-
-  searchTimeout.current = setTimeout(() => {
-    fetchOpds();
-  }, 400);
-
-  return () => clearTimeout(searchTimeout.current);
-
-}, [currentPage, search, searchType, fromDate, toDate]);
+    setCurrentPage(1);
+  }, [search, fromDate, toDate]);
 
   /* ------------------ Pagination Handlers ------------------ */
   const handlePageChange = (newPage) => {
@@ -474,10 +454,12 @@ export default function Opd() {
 
           <div className="flex justify-between items-end mb-4">
              <div>
-               <h2 className="text-xl font-bold text-gray-800">Today's Collection</h2>
-               <p className="text-gray-500 text-xs font-medium mt-0.5">
-                 From server • {totalCount} patients today
-               </p>
+               <h2 className="text-xl font-bold text-gray-800">
+                 {search.trim() ? "Search Results" : "Today's Collection"}
+               </h2>
+                <p className="text-gray-500 text-xs font-medium mt-0.5">
+                   {search.trim() ? "All dates included" : "Filtered data"} • {totalCount} patients
+                </p>
              </div>
              <div className="flex gap-2">
                <button className="flex items-center gap-2 text-blue-600 font-semibold text-xs border border-blue-200 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all">
@@ -496,7 +478,7 @@ export default function Opd() {
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 text-blue-600 font-bold text-lg">₹</div>
               <div>
                 <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Grand Total</p>
-                <h3 className="text-blue-700 text-xl font-bold leading-none mt-1">₹{summary.grandTotal.toLocaleString('en-IN')}</h3>
+                <h3 className="text-blue-700 text-xl font-bold leading-none mt-1">₹{localSummary.grandTotal.toLocaleString('en-IN')}</h3>
               </div>
             </div>
 
@@ -507,7 +489,7 @@ export default function Opd() {
               </div>
               <div>
                 <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Cash</p>
-                <h3 className="text-green-700 text-xl font-bold leading-none mt-1">₹{summary.cash.toLocaleString('en-IN')}</h3>
+                <h3 className="text-green-700 text-xl font-bold leading-none mt-1">₹{localSummary.cash.toLocaleString('en-IN')}</h3>
               </div>
             </div>
 
@@ -518,7 +500,7 @@ export default function Opd() {
               </div>
               <div>
                 <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">UPI</p>
-                <h3 className="text-purple-700 text-xl font-bold leading-none mt-1">₹{summary.upi.toLocaleString('en-IN')}</h3>
+                <h3 className="text-purple-700 text-xl font-bold leading-none mt-1">₹{localSummary.upi.toLocaleString('en-IN')}</h3>
               </div>
             </div>
 
@@ -529,7 +511,7 @@ export default function Opd() {
               </div>
               <div>
                 <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Remaining</p>
-                <h3 className="text-red-700 text-xl font-bold leading-none mt-1">₹{summary.remaining.toLocaleString('en-IN')}</h3>
+                <h3 className="text-red-700 text-xl font-bold leading-none mt-1">₹{localSummary.remaining.toLocaleString('en-IN')}</h3>
               </div>
             </div>
           </div>
@@ -579,14 +561,14 @@ export default function Opd() {
                         </div>
                       </td>
                     </tr>
-                  ) : opds.length === 0 ? (
+                  ) : paginatedOpds.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="py-8 text-center text-sm text-gray-500">
-                        {search || fromDate || toDate ? 'No matching records found.' : 'No OPD records found.'}
+                        {search.trim() ? `No patients found matching "${search}" in entire data.` : 'No matching records found for the selected dates.'}
                       </td>
                     </tr>
                   ) : (
-                    opds.map((opd, index) => (
+                    paginatedOpds.map((opd, index) => (
                       <tr key={extractId(opd)} className="hover:bg-purple-50/50 transition-colors group">
                         <td className="px-4 py-3 text-xs text-gray-500 font-medium">
                           {extractId(opd)}

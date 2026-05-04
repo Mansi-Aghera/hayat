@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Trash2, ChevronLeft, ChevronRight, X, Edit, Baby, ArrowLeft } from "lucide-react";
+import { Eye, Trash2, ChevronLeft, ChevronRight, X, Edit, Baby, ArrowLeft, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getDischarge,updateDischarge } from "../../services/certificates.services";
+import { handleDischargePrint } from "../../utils/dischargePrint";
 
 /* ------------------ Helpers ------------------ */
 const extractId = (item) => item?.id || item?._id;
@@ -123,9 +124,22 @@ export default function DischargeIpd() {
                     </td>
                     <td className="px-4 py-4 text-xs font-medium">{item.datetime_admission}</td>
                     <td className="px-4 py-4 flex gap-2">
-                      <button onClick={() => navigate(`/discharge-ipd/view/${extractId(item)}`)} className="bg-blue-600 text-white p-2 rounded-lg">View</button>
-                      <button onClick={() => navigate(`/discharge/edit/${extractId(item)}`)} className="bg-green-600 text-white p-2 rounded-lg">Update</button>
-                      <button onClick={() => handleDelete(item)} className="bg-red-600 text-white p-2 rounded-lg">Delete</button>
+                      <button onClick={() => navigate(`/discharge-ipd/view/${extractId(item)}`)} className="bg-blue-600 text-white p-2 rounded-lg flex items-center gap-1">
+                        <Eye size={14} />
+                        View
+                      </button>
+                      <button onClick={() => handleDischargePrint(item)} className="bg-emerald-600 text-white p-2 rounded-lg flex items-center gap-1">
+                        <Printer size={14} />
+                        Print
+                      </button>
+                      <button onClick={() => navigate(`/discharge/edit/${extractId(item)}`)} className="bg-green-600 text-white p-2 rounded-lg flex items-center gap-1">
+                        <Edit size={14} />
+                        Update
+                      </button>
+                      <button onClick={() => handleDelete(item)} className="bg-red-600 text-white p-2 rounded-lg flex items-center gap-1">
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

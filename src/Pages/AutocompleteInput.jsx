@@ -12,8 +12,38 @@ const AutocompleteInput = ({
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Reset active index when suggestions change
+  useEffect(() => {
+    setActiveSuggestionIndex(-1);
+  }, [filteredSuggestions]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e) => {
+    if (!showSuggestions) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => 
+        prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeSuggestionIndex >= 0 && activeSuggestionIndex < filteredSuggestions.length) {
+        handleSelectSuggestion(filteredSuggestions[activeSuggestionIndex]);
+      } else if (shouldShowAddNew()) {
+        handleCreateNew();
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+    }
+  };
 
   // Handle initial value and updates
   useEffect(() => {
@@ -131,6 +161,7 @@ const AutocompleteInput = ({
           value={inputValue}
           onChange={handleInputChange}
           onFocus={handleFocus}
+          onKeyDown={handleKeyDown}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder={placeholder}
           autoComplete="off"
@@ -158,11 +189,13 @@ const AutocompleteInput = ({
             </div>
           ) : filteredSuggestions.length > 0 ? (
             <>
-              {filteredSuggestions.map((item) => (
+              {filteredSuggestions.map((item, index) => (
                 <div
                   key={item.id}
                   onClick={() => handleSelectSuggestion(item)}
-                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  className={`px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                    index === activeSuggestionIndex ? 'bg-blue-100' : ''
+                  }`}
                 >
                   <div className="font-medium text-gray-800">
                     {item.name || item.medicine_name || item.label}
@@ -179,7 +212,9 @@ const AutocompleteInput = ({
               {shouldShowAddNew() && (
                 <div
                   onClick={handleCreateNew}
-                  className="px-4 py-2 hover:bg-green-50 cursor-pointer border-t border-gray-200"
+                  className={`px-4 py-2 hover:bg-green-50 cursor-pointer border-t border-gray-200 ${
+                    activeSuggestionIndex === -1 && String(inputValue || '').trim() ? '' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-2 text-green-600">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -12,12 +12,14 @@ import RxSection from './RxSection';
 import AdviceSection from './AdviceSection';
 import NotesSection from './NoteSection';
 import AdditionalFieldsSection from './AdditionalFieldsSection';
+import InvestigationSection from './InvestigationSection';
 
 // Import services
 import { useDischargeForm } from './useDischargeForm';
 import { createDischargeIpd, getDischargeByIpdId, updateDischargeIpd } from '../../services/ipd.services';
 import { getBeds } from '../../services/bed.services';
 import { getDoctors } from '../../services/doctor.services';
+import { handleDischargePrint } from '../../utils/dischargePrint';
 
 const DischargeForm = () => {
   const { ipdId, dischargeId } = useParams();
@@ -119,7 +121,9 @@ const DischargeForm = () => {
           doses: r.doses,
           intake_type: r.intake_type,
           quantity: r.quantity
-        })) || []
+        })) || [],
+        investigations: data.investigation ? data.investigation.split('\n').filter(Boolean).map(i => i.trim()) : [],
+        next_visit: data.next_visit ? data.next_visit.split('\n').filter(Boolean).map(i => i.trim()) : []
       });
     } catch (error) {
       console.error('Error fetching discharge data:', error);
@@ -214,7 +218,8 @@ const DischargeForm = () => {
         datetime_admission: formatDateForAPI(formData.datetime_admission, false),
         date: formatDateForAPI(formData.date, true),
         sr_no: formData.sr_no || '',
-        investigation: formData.investigation || null,
+        investigation: formData.investigations.join('\n') || null,
+        next_visit: formData.next_visit.join('\n') || null,
         dd_note: formData.dd_note || null,
         age: parseInt(formData.age),
         mobile: formData.mobile.toString(),
@@ -257,6 +262,18 @@ const DischargeForm = () => {
       }
       
       console.log('Response:', res);
+      
+      // Fetch full details and print
+      try {
+        const savedId = isEditMode ? dischargeId : (res.data?.id || res.id);
+        if (savedId) {
+          const fullData = await getDischargeByIpdId(savedId);
+          handleDischargePrint(fullData.data || fullData);
+        }
+      } catch (printError) {
+        console.error('Error triggering print:', printError);
+        toast.error('Saved successfully, but failed to trigger print dialog');
+      }
       
       setTimeout(() => {
         navigate(`/discharge-ipd`);
@@ -523,6 +540,15 @@ const DischargeForm = () => {
               handleRemoveItem={handlers.handleRemoveItem}
             />
             
+            <InvestigationSection 
+              investigationInput={handlers.investigationInput}
+              setInvestigationInput={handlers.setInvestigationInput}
+              opinions={opinions}
+              formData={formData}
+              handleAddInvestigation={handlers.handleAddInvestigation}
+              handleRemoveItem={handlers.handleRemoveItem}
+            />
+            
             <TreatmentChartSection 
               treatmentForm={handlers.treatmentForm}
               handleTreatmentChange={handlers.handleTreatmentChange}
@@ -562,6 +588,10 @@ const DischargeForm = () => {
             <AdditionalFieldsSection 
               formData={formData}
               setFormData={setFormData}
+              nextVisitInput={handlers.nextVisitInput}
+              setNextVisitInput={handlers.setNextVisitInput}
+              handleAddNextVisit={handlers.handleAddNextVisit}
+              handleRemoveItem={handlers.handleRemoveItem}
             />
           </div>
 
@@ -586,7 +616,7 @@ const DischargeForm = () => {
                   Processing...
                 </>
               ) : (
-                isEditMode ? 'Update Discharge' : 'Discharge Patient'
+                isEditMode ? 'Update & Print Discharge' : 'Discharge & Print Patient'
               )}
             </button>
           </div>

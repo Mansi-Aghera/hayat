@@ -34,7 +34,7 @@ const TreatmentChartSection = ({
   };
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Treatment Chart</h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Treatment Given</h3>
       <div className="bg-gray-50 p-4 rounded-lg mb-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
