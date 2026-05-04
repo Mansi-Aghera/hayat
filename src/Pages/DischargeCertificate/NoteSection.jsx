@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 import AutocompleteInput from "../AutocompleteInput";
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from "lucide-react";
 
 const NotesSection = ({
   noteInput,
@@ -8,7 +8,7 @@ const NotesSection = ({
   opinions,
   formData,
   handleAddNote,
-  handleRemoveItem
+  handleRemoveItem,
 }) => {
   return (
     <div className="space-y-4">
@@ -17,7 +17,7 @@ const NotesSection = ({
         <label className="text-base font-bold text-gray-900 whitespace-nowrap pt-2 w-[150px] flex-shrink-0">
           Note
         </label>
-        
+
         <div className="flex-1 flex gap-3 items-start">
           <div className="flex-1">
             <AutocompleteInput
@@ -38,21 +38,25 @@ const NotesSection = ({
           </button>
         </div>
       </div>
-      
+
       {/* List of Notes Below Input */}
       <div className="pl-[150px] space-y-2">
         {formData.Note.map((item, index) => {
-          const opinionId = item.opinion_details_data?.id || item.opinion_details_data;
-          const note = opinions.find(o => o.id === opinionId);
-          
+          const opinionId =
+            item.opinion_details_data?.id || item.opinion_details_data;
+          const note = opinions.find((o) => o.id === opinionId);
+
           return (
-            <div key={index} className="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 group">
+            <div
+              key={index}
+              className="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg border border-gray-100 group"
+            >
               <span className="text-sm font-medium text-gray-700">
-                {note?.name || note?.opinion_name || 'Unknown Note'}
+                {note?.name || note?.opinion_name || "Unknown Note"}
               </span>
               <button
                 type="button"
-                onClick={() => handleRemoveItem('Note', index)}
+                onClick={() => handleRemoveItem("Note", index)}
                 className="text-red-500 hover:text-red-700 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 size={16} />
