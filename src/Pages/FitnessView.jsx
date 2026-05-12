@@ -273,7 +273,8 @@ const FitnessView = () => {
             </tr>
             <tr>
               <td>H/O Hospitalization = {checkStatus(data.patient_condition?.personal_H_O, "Hospitalization")}</td>
-              <td colSpan="2">Any Drug Reaction = {checkStatus(data.patient_condition?.personal_H_O, "Reaction")}</td>
+              <td>Any Drug Reaction = {checkStatus(data.patient_condition?.personal_H_O, "Reaction")}</td>
+              <td></td>
             </tr>
 
             {/* General Examination Section */}
@@ -284,7 +285,9 @@ const FitnessView = () => {
               <td>Pulse = {data.patient_condition?.pulse || "--"}</td>
             </tr>
             <tr>
-              <td colSpan="3">ECG = {data.patient_condition?.ECG?.toUpperCase() || "---"}</td>
+              <td>ECG = {data.patient_condition?.ECG?.toUpperCase() || "---"}</td>
+              <td></td>
+              <td></td>
             </tr>
             <tr>
               <td>Temp = {data.patient_condition?.temperature ? (parseFloat(data.patient_condition.temperature) <= 99 ? 'AFEBRILE' : data.patient_condition.temperature + ' F') : "---"}</td>
@@ -322,14 +325,17 @@ const FitnessView = () => {
                 <span className="uppercase">{data.Opinion || "---"}</span>
               </td>
             </tr>
+          </tbody>
+        </table>
 
-            {/* Signature Section */}
+        {/* Signature Section - Separate Box */}
+        <table className="table-certificate mt-6 bg-highlight" style={{ background: '#d1d5db' }}>
+          <tbody>
             <tr>
-              <td colSpan="4" className="bg-highlight" style={{ height: '120px', verticalAlign: 'bottom', paddingBottom: '15px' }}>
-                <div className="text-right font-bold uppercase pr-6">Doctor's Signature</div>
+              <td colSpan="4" style={{ height: '120px', verticalAlign: 'bottom', paddingBottom: '15px' }} className="text-right font-bold uppercase pr-6">
+                Doctor's Signature
               </td>
             </tr>
-
           </tbody>
         </table>
       </div>

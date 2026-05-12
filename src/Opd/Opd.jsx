@@ -27,6 +27,9 @@ export default function Opd() {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  // All filtered records cached for client-side pagination
+  const allFilteredRef = useRef([]);
+
   // search & filter
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -36,70 +39,108 @@ export default function Opd() {
 
   // pagination
   const itemsPerPage = 10;
-  
-  // Debounce search to avoid too many API calls
+
+  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Collection Summary (from API summary field)
-  const [apiSummary, setApiSummary] = useState({
-    grandTotal: 0,
-    cash: 0,
-    upi: 0,
-    remaining: 0
-  });
+  // Collection Summary
+  const [apiSummary, setApiSummary] = useState({ grandTotal: 0, cash: 0, upi: 0, remaining: 0 });
 
+  // ── Helper: apply client-side date + search filter ──────────────────────
+  const applyFilters = (records) => {
+    let filtered = records;
+
+    // Date filter
+    if (fromDate && toDate) {
+      filtered = filtered.filter(opd => {
+        // date field looks like "2026-05-12 15:58:30" or "2026-05-12T15:58:30"
+        const d = (opd.date || opd.datetime || '').substring(0, 10);
+        return d >= fromDate && d <= toDate;
+      });
+    }
+
+    // Search filter (backup – API may already filter by search)
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.trim().toLowerCase();
+      filtered = filtered.filter(opd => {
+        if (searchType === 'patient_name') return (opd.patient_name || '').toLowerCase().includes(q);
+        if (searchType === 'mobile_number') return (opd.mobile_no || '').includes(q);
+        if (searchType === 'hid') return String(opd.id || '').includes(q);
+        return true;
+      });
+    }
+
+    return filtered;
+  };
+
+  // ── Fetch ALL pages from API, then filter + paginate client-side ─────────
   const fetchOpds = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = {
-        page: currentPage,
+      // Step 1: fetch page 1 to know total count
+      const firstRes = await getOpds({
+        page: 1,
         search: debouncedSearch,
         search_type: searchType,
-        from_date: fromDate,
-        to_date: toDate
-      };
+      });
+      const firstData = firstRes.data;
+      const serverCount = firstData.count || 0;
+      const serverPages = Math.ceil(serverCount / 10);
+      let allRecords = [...(firstData.data || [])];
 
-      const response = await getOpds(params);
-      const data = response.data;
-      
-      setOpds(data.data || []);
-      setTotalCount(data.count || 0);
-      setTotalPages(Math.ceil((data.count || 0) / itemsPerPage));
-      
-      if (data.summary) {
-        setApiSummary({
-          grandTotal: parseFloat(data.summary.total_collection || 0),
-          cash: parseFloat(data.summary.cash_collection || 0),
-          upi: parseFloat(data.summary.upi_collection || 0),
-          remaining: parseFloat(data.summary.remaining_amount || 0)
-        });
+      // Step 2: fetch remaining pages in parallel batches of 10
+      const BATCH = 10;
+      for (let p = 2; p <= serverPages; p += BATCH) {
+        const batchNums = Array.from(
+          { length: Math.min(BATCH, serverPages - p + 1) },
+          (_, i) => p + i
+        );
+        const batchRes = await Promise.all(
+          batchNums.map(n => getOpds({ page: n, search: debouncedSearch, search_type: searchType }))
+        );
+        batchRes.forEach(r => { allRecords = [...allRecords, ...(r.data.data || [])]; });
       }
+
+      // Step 3: client-side filter by date (and search as backup)
+      const filtered = applyFilters(allRecords);
+      allFilteredRef.current = filtered;
+
+      // Step 4: calculate summary from filtered data
+      const grandTotal = filtered.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+      const cash      = filtered.filter(o => o.payment_mode === 'cash').reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+      const upi       = filtered.filter(o => o.payment_mode === 'upi').reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+      const remaining = filtered.filter(o => !o.is_received || o.is_received === 0).reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+      setApiSummary({ grandTotal, cash, upi, remaining });
+
+      // Step 5: set pagination totals, show page 1
+      setTotalCount(filtered.length);
+      setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+      setCurrentPage(1);
+      setOpds(filtered.slice(0, itemsPerPage));
+
     } catch (err) {
       console.error(err);
       setError("Failed to fetch OPD records");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, debouncedSearch, searchType, fromDate, toDate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, searchType, fromDate, toDate]);
 
-  useEffect(() => {
-    fetchOpds();
-  }, [fetchOpds]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, fromDate, toDate, searchType]);
+  // Re-fetch when filters change
+  useEffect(() => { fetchOpds(); }, [fetchOpds]);
 
   /* ------------------ Pagination Handlers ------------------ */
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
+      // Slice the cached filtered list — no API call needed
+      const start = (newPage - 1) * itemsPerPage;
+      setOpds(allFilteredRef.current.slice(start, start + itemsPerPage));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };

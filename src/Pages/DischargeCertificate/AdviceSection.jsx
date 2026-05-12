@@ -19,6 +19,7 @@ const AdviceSection = ({
         </label>
 
         <div className="flex-1 flex gap-3 items-start">
+          
           <div className="flex-1">
             <AutocompleteInput
               value={adviceInput}
