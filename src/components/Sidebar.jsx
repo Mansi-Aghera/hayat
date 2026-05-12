@@ -69,7 +69,7 @@ export default function Sidebar({ open = false, onClose }) {
 
       {/* Sidebar */}
       <div
-        className={`w-50 bg-indigo-800 text-white flex flex-col md:sticky md:top-0 md:h-screen md:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${
+        className={`w-50 bg-indigo-800 text-white flex flex-col md:sticky md:top-0 md:h-screen md:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 print:hidden print-hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

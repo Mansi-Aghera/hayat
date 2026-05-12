@@ -62,49 +62,85 @@ const FitnessView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 flex flex-col items-center font-serif text-black">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 flex flex-col items-center font-sans text-black">
       <style dangerouslySetInnerHTML={{ __html: `
+        @media screen {
+          /* Hide scrollbars ONLY for this certificate view page on screen */
+          html, body, main, div, section, .scrollbar-hide {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          /* Hide the mobile Admin Panel bar ONLY on this page */
+          .md\\:hidden {
+            display: none !important;
+          }
+        }
+
         @media print {
-          header, nav, aside, footer, .print-hidden { 
+          /* HIDE EVERYTHING EXCEPT THE CERTIFICATE */
+          header, nav, aside, footer, .print-hidden, .md\\:hidden, 
+          [class*="sidebar"], [class*="Sidebar"], 
+          .fixed, .sticky { 
             display: none !important; 
           }
+          
+          /* Force hide the sidebar specifically if it's a div */
+          div[class*="bg-indigo-800"] {
+            display: none !important;
+          }
+
           @page { 
             margin: 0; 
             size: A4;
           }
-          body { 
+          
+          body, html, main, div, section { 
             background: white !important; 
-            margin: 0; 
-            padding: 0;
+            margin: 0 !important; 
+            padding: 0 !important;
             color: black !important;
+            overflow: visible !important; /* Prevents scrollbars in print */
+            height: auto !important;
           }
+
+          ::-webkit-scrollbar {
+            display: none !important;
+          }
+
           .min-h-screen {
             background: white !important;
             padding: 0 !important;
             min-height: auto !important;
           }
+
           .certificate-container {
             width: 210mm !important;
             min-height: 297mm !important;
-            margin: 0 !important;
-            padding-top: 6cm !important;
-            padding-left: 2.5cm !important;
+            margin: 0 auto !important;
+            padding-top: 5cm !important;
+            padding-left: 1.5cm !important;
             padding-right: 1.5cm !important;
             padding-bottom: 1.5cm !important;
             box-shadow: none !important;
             border: none !important;
             box-sizing: border-box !important;
+            display: block !important;
           }
+
           .table-certificate th, .table-certificate td {
-            padding: 4px 8px !important;
-            font-size: 12px !important;
+            padding: 5px 10px !important;
+            font-size: 13px !important;
           }
           .text-header {
-            font-size: 16px !important;
+            font-size: 18px !important;
           }
           .signature-cell {
-            height: 80px !important;
-            padding-bottom: 5px !important;
+            height: 100px !important;
           }
           .mt-10-print-none {
             margin-top: 0 !important;
@@ -116,32 +152,35 @@ const FitnessView = () => {
           border-collapse: collapse;
           table-layout: fixed;
           background: white;
-          border: 1.5px solid black;
+          border: 2px solid black;
         }
         .table-certificate th, .table-certificate td {
           border: 1.5px solid black;
-          padding: 6px 10px;
+          padding: 8px 12px;
           text-align: left;
           font-size: 14px;
         }
         .text-header {
           text-align: center !important;
-          font-weight: 1000 !important;
-          font-size: 20px !important;
-          letter-spacing: 1px;
+          font-weight: 900 !important;
+          font-size: 22px !important;
+          letter-spacing: 0.5px;
         }
         .label-bold {
           font-weight: 800;
         }
         .section-header {
-           width: 25%;
+           width: 20%;
            vertical-align: middle;
         }
-        .col-width-fixed {
-           width: 25%;
+        .col-label {
+           width: 20%;
+        }
+        .col-data {
+           width: 26.66%;
         }
         .bg-highlight {
-          background-color: #E0E0E0 !important;
+          background-color: #d1d5db !important;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
@@ -157,46 +196,46 @@ const FitnessView = () => {
         </button>
       </div>
 
-      <div className="certificate-container w-full max-w-[850px] bg-white shadow-lg overflow-hidden p-4 md:p-8">
+      <div className="certificate-container w-full max-w-[850px] bg-white shadow-lg overflow-hidden p-4 md:p-8 scrollbar-hide">
         <table className="table-certificate">
           <colgroup>
-            <col className="col-width-fixed" />
-            <col className="col-width-fixed" />
-            <col className="col-width-fixed" />
-            <col className="col-width-fixed" />
+            <col className="col-label" />
+            <col className="col-data" />
+            <col className="col-data" />
+            <col className="col-data" />
           </colgroup>
           <tbody>
             {/* Title */}
             <tr className="bg-highlight">
-              <td colSpan="4" className="text-header uppercase italic">Fitness Certificate</td>
+              <td colSpan="4" className="text-header uppercase italic font-bold">Fitness Certificate</td>
             </tr>
 
             {/* Referrer & Date */}
             <tr>
-              <td colSpan="3"><span className="label-bold uppercase">Referring Doctor/Hospital:</span> {data.referrer?.toUpperCase() || "N/A"}</td>
-              <td><span className="label-bold">Date:</span> {data.date || "N/A"}</td>
+              <td colSpan="3" className="font-bold uppercase">Referring Doctor/Hospital: {data.referrer?.toUpperCase() || "N/A"}</td>
+              <td className="font-bold">Date: {data.date || "N/A"}</td>
             </tr>
 
             {/* Patient Name & Age/Sex */}
             <tr>
-              <td colSpan="3"><span className="label-bold uppercase">Patient's Name:</span> {data.patient_name?.toUpperCase() || "N/A"}</td>
-              <td><span className="label-bold">Age/ Sex:</span> {data.age || "N/A"} / {data.gender || "N/A"}</td>
+              <td colSpan="3" className="font-bold uppercase">Patient's Name: {data.patient_name?.toUpperCase() || "N/A"}</td>
+              <td className="font-bold">Age/ Sex: {data.age || "N/A"} / {data.gender || "N/A"}</td>
             </tr>
 
             {/* Address & Mobile */}
             <tr>
-              <td colSpan="3"><span className="label-bold">Address:</span> {data.address?.toUpperCase() || "N/A"}</td>
-              <td><span className="label-bold uppercase">Mobile:</span> {data.mobile_no || "N/A"}</td>
+              <td colSpan="3" className="font-bold">Address: {data.address?.toUpperCase() || "N/A"}</td>
+              <td className="font-bold uppercase">Mobile: {data.mobile_no || "N/A"}</td>
             </tr>
 
             {/* Posted For */}
             <tr className="bg-highlight">
-              <td colSpan="4"><span className="label-bold uppercase">Posted For:</span> {data.posted_for?.toUpperCase() || "N/A"}</td>
+              <td colSpan="4" className="font-bold uppercase">Posted For: {data.posted_for?.toUpperCase() || "N/A"}</td>
             </tr>
 
             {/* Complaints Section */}
             <tr>
-              <td rowSpan="3" className="section-header label-bold">COMPLAINTS:</td>
+              <td rowSpan="3" className="section-header font-bold">COMPLAINTS:</td>
               <td>Chest Pain = {checkStatus(data.patient_condition?.complaints, "Chest Pain")}</td>
               <td>Palpitation = {checkStatus(data.patient_condition?.complaints, "Palpitation")}</td>
               <td>Breathlessness = {checkStatus(data.patient_condition?.complaints, "Breathlessness")}</td>
@@ -214,7 +253,7 @@ const FitnessView = () => {
 
             {/* Past History Section */}
             <tr>
-              <td rowSpan="2" className="section-header label-bold">PAST HISTORY OF:</td>
+              <td rowSpan="2" className="section-header font-bold">PAST HISTORY OF:</td>
               <td>HTN = {checkStatus(data.patient_condition?.past_history, "HTN")}</td>
               <td>DM = {checkStatus(data.patient_condition?.past_history, "DM")}</td>
               <td>CAD/CVA = {checkStatus(data.patient_condition?.past_history, "CAD")}</td>
@@ -227,7 +266,7 @@ const FitnessView = () => {
 
             {/* Personal H/O Section */}
             <tr>
-              <td rowSpan="2" className="section-header label-bold uppercase tracking-tight">Personal H/O:</td>
+              <td rowSpan="2" className="section-header font-bold uppercase tracking-tight">Personal H/O:</td>
               <td>Tobacco = {checkStatus(data.patient_condition?.personal_H_O, "Tobacco")}</td>
               <td>Bidi/Cigarette = {checkStatus(data.patient_condition?.personal_H_O, "Bidi")}</td>
               <td>Alcohol = {checkStatus(data.patient_condition?.personal_H_O, "Alcohol")}</td>
@@ -239,7 +278,7 @@ const FitnessView = () => {
 
             {/* General Examination Section */}
             <tr>
-              <td rowSpan="5" className="section-header label-bold uppercase">General Examination:</td>
+              <td rowSpan="5" className="section-header font-bold uppercase">General Examination:</td>
               <td>BP = {data.patient_condition?.blood_pressure || "---/---"}</td>
               <td>Blood Sugar = {data.patient_condition?.blood_sugar || "--"}</td>
               <td>Pulse = {data.patient_condition?.pulse || "--"}</td>
@@ -265,7 +304,7 @@ const FitnessView = () => {
 
             {/* Systemic Examination Section */}
             <tr>
-              <td rowSpan="2" className="section-header label-bold uppercase">Systemic Examination:</td>
+              <td rowSpan="2" className="section-header font-bold uppercase">Systemic Examination:</td>
               <td>RS = {data.patient_condition?.RS?.toUpperCase() || "---"}</td>
               <td>CVS = {data.patient_condition?.CVS?.toUpperCase() || "---"}</td>
               <td>P/A = {data.patient_condition?.PA?.toUpperCase() || "---"}</td>
@@ -277,17 +316,17 @@ const FitnessView = () => {
             </tr>
 
             {/* Opinion Section */}
-            <tr className="bg-highlight">
-              <td colSpan="4" className="py-2">
-                <span className="label-bold uppercase">Opinion: </span>
+            <tr>
+              <td colSpan="4" className="py-3 px-3 font-bold border-2">
+                <span className="uppercase">Opinion : </span>
                 <span className="uppercase">{data.Opinion || "---"}</span>
               </td>
             </tr>
 
             {/* Signature Section */}
             <tr>
-              <td colSpan="4" className="signature-cell relative mt-10 mt-10-print-none" style={{ verticalAlign: 'bottom', paddingBottom: '10px' }}>
-                <div className="text-right label-bold uppercase">Doctor's Signature</div>
+              <td colSpan="4" className="bg-highlight" style={{ height: '120px', verticalAlign: 'bottom', paddingBottom: '15px' }}>
+                <div className="text-right font-bold uppercase pr-6">Doctor's Signature</div>
               </td>
             </tr>
 
