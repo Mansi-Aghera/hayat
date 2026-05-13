@@ -29,6 +29,9 @@ export default function Opd() {
 
   // All filtered records cached for client-side pagination
   const allFilteredRef = useRef([]);
+  // Cache for raw records from API for the current search
+  const [allRawRecords, setAllRawRecords] = useState([]);
+  const lastSearchKeyRef = useRef("");
 
   // search & filter
   const [search, setSearch] = useState("");
@@ -76,8 +79,15 @@ export default function Opd() {
     return filtered;
   };
 
-  // ── Fetch ALL pages from API, then filter + paginate client-side ─────────
+  // ── Fetch ALL pages from API (only when search changes) ───────────────────
   const fetchOpds = useCallback(async () => {
+    const currentSearchKey = `${debouncedSearch}-${searchType}`;
+    
+    // If search hasn't changed and we already have raw records, skip API calls
+    if (lastSearchKeyRef.current === currentSearchKey && allRawRecords.length > 0) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -92,6 +102,17 @@ export default function Opd() {
       const serverPages = Math.ceil(serverCount / 10);
       let allRecords = [...(firstData.data || [])];
 
+      // Early exit check for page 1
+      if (fromDate && allRecords.length > 0) {
+        const lastRec = allRecords[allRecords.length - 1];
+        const lastD = (lastRec.date || lastRec.datetime || '').substring(0, 10);
+        if (lastD < fromDate) {
+          lastSearchKeyRef.current = currentSearchKey;
+          setAllRawRecords(allRecords);
+          return;
+        }
+      }
+
       // Step 2: fetch remaining pages in parallel batches of 10
       const BATCH = 10;
       for (let p = 2; p <= serverPages; p += BATCH) {
@@ -102,25 +123,24 @@ export default function Opd() {
         const batchRes = await Promise.all(
           batchNums.map(n => getOpds({ page: n, search: debouncedSearch, search_type: searchType }))
         );
-        batchRes.forEach(r => { allRecords = [...allRecords, ...(r.data.data || [])]; });
+        
+        let batchRecords = [];
+        batchRes.forEach(r => { batchRecords = [...batchRecords, ...(r.data.data || [])]; });
+        allRecords = [...allRecords, ...batchRecords];
+
+        // Early exit check for the batch
+        if (fromDate && batchRecords.length > 0) {
+          const lastRec = batchRecords[batchRecords.length - 1];
+          const lastD = (lastRec.date || lastRec.datetime || '').substring(0, 10);
+          if (lastD < fromDate) {
+            break;
+          }
+        }
       }
 
-      // Step 3: client-side filter by date (and search as backup)
-      const filtered = applyFilters(allRecords);
-      allFilteredRef.current = filtered;
-
-      // Step 4: calculate summary from filtered data
-      const grandTotal = filtered.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
-      const cash      = filtered.filter(o => o.payment_mode === 'cash').reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
-      const upi       = filtered.filter(o => o.payment_mode === 'upi').reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
-      const remaining = filtered.filter(o => !o.is_received || o.is_received === 0).reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
-      setApiSummary({ grandTotal, cash, upi, remaining });
-
-      // Step 5: set pagination totals, show page 1
-      setTotalCount(filtered.length);
-      setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-      setCurrentPage(1);
-      setOpds(filtered.slice(0, itemsPerPage));
+      // Step 3: update raw records cache and current search key
+      lastSearchKeyRef.current = currentSearchKey;
+      setAllRawRecords(allRecords);
 
     } catch (err) {
       console.error(err);
@@ -129,9 +149,39 @@ export default function Opd() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, searchType, fromDate, toDate]);
+  }, [debouncedSearch, searchType]);
 
-  // Re-fetch when filters change
+  // ── Local Filtering & UI Update ──────────────────────────────────────────
+  useEffect(() => {
+    // Only filter if we have data or we just finished a fetch that might have returned empty
+    if (allRawRecords.length === 0 && !loading) {
+        // If it's truly empty (no records found), reset UI
+        setOpds([]);
+        setTotalCount(0);
+        setTotalPages(0);
+        setApiSummary({ grandTotal: 0, cash: 0, upi: 0, remaining: 0 });
+        return;
+    }
+
+    // Apply client-side filter by date (and search as backup)
+    const filtered = applyFilters(allRawRecords);
+    allFilteredRef.current = filtered;
+
+    // Calculate summary from filtered data
+    const grandTotal = filtered.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+    const cash      = filtered.filter(o => o.payment_mode === 'cash').reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+    const upi       = filtered.filter(o => o.payment_mode === 'upi').reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+    const remaining = filtered.filter(o => !o.is_received || o.is_received === 0).reduce((s, o) => s + parseFloat(o.total_amount || 0), 0);
+    setApiSummary({ grandTotal, cash, upi, remaining });
+
+    // Update pagination totals, show page 1
+    setTotalCount(filtered.length);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+    setCurrentPage(1);
+    setOpds(filtered.slice(0, itemsPerPage));
+  }, [allRawRecords, fromDate, toDate, itemsPerPage]);
+
+  // Trigger fetch when search query changes
   useEffect(() => { fetchOpds(); }, [fetchOpds]);
 
   /* ------------------ Pagination Handlers ------------------ */
