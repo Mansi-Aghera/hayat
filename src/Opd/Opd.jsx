@@ -42,6 +42,8 @@ export default function Opd() {
 
   // pagination
   const itemsPerPage = 10;
+  const API_PAGE_SIZE = 100;
+  const [isFullyLoaded, setIsFullyLoaded] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -56,8 +58,11 @@ export default function Opd() {
   const applyFilters = (records) => {
     let filtered = records;
 
-    // Date filter
-    if (fromDate && toDate) {
+    // Filter out deleted
+    filtered = filtered.filter(opd => !opd.is_delete);
+
+    // Date filter - only applied if NOT searching
+    if (fromDate && toDate && !debouncedSearch.trim()) {
       filtered = filtered.filter(opd => {
         // date field looks like "2026-05-12 15:58:30" or "2026-05-12T15:58:30"
         const d = (opd.date || opd.datetime || '').substring(0, 10);
@@ -79,11 +84,16 @@ export default function Opd() {
     return filtered;
   };
 
-  // ── Fetch ALL pages from API (only when filters change) ──────────────────
+  // ── Fetch Initial/Recent Data ───────────────────────────────────────────
   const fetchOpds = useCallback(async () => {
-    const currentSearchKey = `${debouncedSearch}-${searchType}-${fromDate}-${toDate}`;
+    // If everything is already in memory, we don't need the API anymore!
+    if (isFullyLoaded) return;
+
+    // We only fetch based on dates to keep the initial load fast.
+    // SEARCH is handled locally for 100% accuracy since backend search is inconsistent.
+    const currentSearchKey = `${fromDate}-${toDate}`;
     
-    // If search/dates haven't changed and we already have raw records, skip API calls
+    // If dates haven't changed and we already have raw records, skip API calls
     if (lastSearchKeyRef.current === currentSearchKey && allRawRecords.length > 0) {
       return;
     }
@@ -91,15 +101,14 @@ export default function Opd() {
     setLoading(true);
     setError(null);
     try {
-      // Step 1: fetch page 1 to know total count
+      // Step 1: fetch page 1
       const firstRes = await getOpds({
         page: 1,
-        search: debouncedSearch,
-        search_type: searchType,
+        page_size: API_PAGE_SIZE
       });
       const firstData = firstRes.data;
       const serverCount = firstData.count || 0;
-      const serverPages = Math.ceil(serverCount / 10);
+      const serverPages = Math.ceil(serverCount / API_PAGE_SIZE);
       let allRecords = [...(firstData.data || [])];
 
       // Early exit check for page 1
@@ -113,15 +122,18 @@ export default function Opd() {
         }
       }
 
-      // Step 2: fetch remaining pages in parallel batches of 10
-      const BATCH = 10;
+      // Step 2: fetch remaining pages in parallel batches of 20
+      const BATCH = 20;
       for (let p = 2; p <= serverPages; p += BATCH) {
         const batchNums = Array.from(
           { length: Math.min(BATCH, serverPages - p + 1) },
           (_, i) => p + i
         );
         const batchRes = await Promise.all(
-          batchNums.map(n => getOpds({ page: n, search: debouncedSearch, search_type: searchType }))
+          batchNums.map(n => getOpds({ 
+            page: n, 
+            page_size: API_PAGE_SIZE
+          }))
         );
         
         let batchRecords = [];
@@ -149,7 +161,38 @@ export default function Opd() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, searchType, fromDate, toDate]);
+  }, [fromDate, toDate, isFullyLoaded]);
+
+  // ── Background Full Load ────────────────────────────────────────────────
+  useEffect(() => {
+    const loadEverythingInBackground = async () => {
+      try {
+        // Initial quick load is already handled by fetchOpds calling on mount.
+        // This background task will ensure we have the WHOLE database for instant search.
+        const firstRes = await getOpds({ page: 1, page_size: API_PAGE_SIZE });
+        const count = firstRes.data.count || 0;
+        const totalPages = Math.ceil(count / API_PAGE_SIZE);
+        let fullData = [...(firstRes.data.data || [])];
+
+        const BATCH = 20;
+        for (let p = 2; p <= totalPages; p += BATCH) {
+          const batchNums = Array.from({ length: Math.min(BATCH, totalPages - p + 1) }, (_, i) => p + i);
+          const results = await Promise.all(batchNums.map(n => getOpds({ page: n, page_size: API_PAGE_SIZE })));
+          results.forEach(r => { fullData = [...fullData, ...(r.data.data || [])]; });
+        }
+        
+        setAllRawRecords(fullData);
+        setIsFullyLoaded(true);
+        console.log("Database fully loaded in background:", fullData.length, "records.");
+      } catch (err) {
+        console.error("Background loading failed:", err);
+      }
+    };
+    
+    // Small delay to let the initial UI render first
+    const timer = setTimeout(loadEverythingInBackground, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // ── Local Filtering & UI Update ──────────────────────────────────────────
   useEffect(() => {
@@ -179,7 +222,7 @@ export default function Opd() {
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
     setCurrentPage(1);
     setOpds(filtered.slice(0, itemsPerPage));
-  }, [allRawRecords, fromDate, toDate, itemsPerPage]);
+  }, [allRawRecords, fromDate, toDate, itemsPerPage, debouncedSearch, searchType, loading]);
 
   // Trigger fetch when search query changes
   useEffect(() => { fetchOpds(); }, [fetchOpds]);
