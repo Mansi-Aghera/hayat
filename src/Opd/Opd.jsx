@@ -79,11 +79,11 @@ export default function Opd() {
     return filtered;
   };
 
-  // ── Fetch ALL pages from API (only when search changes) ───────────────────
+  // ── Fetch ALL pages from API (only when filters change) ──────────────────
   const fetchOpds = useCallback(async () => {
-    const currentSearchKey = `${debouncedSearch}-${searchType}`;
+    const currentSearchKey = `${debouncedSearch}-${searchType}-${fromDate}-${toDate}`;
     
-    // If search hasn't changed and we already have raw records, skip API calls
+    // If search/dates haven't changed and we already have raw records, skip API calls
     if (lastSearchKeyRef.current === currentSearchKey && allRawRecords.length > 0) {
       return;
     }
@@ -149,7 +149,7 @@ export default function Opd() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, searchType]);
+  }, [debouncedSearch, searchType, fromDate, toDate]);
 
   // ── Local Filtering & UI Update ──────────────────────────────────────────
   useEffect(() => {
