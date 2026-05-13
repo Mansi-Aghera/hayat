@@ -124,13 +124,17 @@ export default function OpdFooterSummary({ id }) {
         return;
       }
 
-      setForm(prev => ({
-        ...prev,
-        service_ids: [...prev.service_ids, serviceId],
-        total_amount: (parseFloat(prev.total_amount || 0) + servicePrice).toString(),
-        newServiceName: "",
-        newServiceCharge: ""
-      }));
+      setForm(prev => {
+        const currentTotal = parseFloat(prev.total_amount || 0);
+        const newTotal = currentTotal + servicePrice;
+        return {
+          ...prev,
+          service_ids: [...prev.service_ids, serviceId],
+          total_amount: newTotal.toString(),
+          newServiceName: "",
+          newServiceCharge: ""
+        };
+      });
       setShowSuggestions(false);
     } catch (error) {
       console.error("Error adding service:", error);
@@ -139,13 +143,18 @@ export default function OpdFooterSummary({ id }) {
   };
 
   const removeService = (serviceId) => {
-    const service = services.find(s => s.id === serviceId);
+    const service = services.find(s => String(s.id) === String(serviceId));
     if (!service) return;
-    setForm(prev => ({
-      ...prev,
-      service_ids: prev.service_ids.filter(id => id !== serviceId),
-      total_amount: Math.max(0, parseFloat(prev.total_amount) - parseFloat(service.service_price)).toString()
-    }));
+    setForm(prev => {
+      const updatedIds = prev.service_ids.filter(id => String(id) !== String(serviceId));
+      const currentTotal = parseFloat(prev.total_amount || 0);
+      const servicePrice = parseFloat(service.service_price || 0);
+      return {
+        ...prev,
+        service_ids: updatedIds,
+        total_amount: Math.max(0, currentTotal - servicePrice).toString()
+      };
+    });
   };
 
   const handleSave = async () => {
@@ -159,7 +168,7 @@ export default function OpdFooterSummary({ id }) {
         total_amount: parseFloat(form.total_amount),
         payment_mode: form.payment_mode,
         is_received: form.is_received,
-        prescription: form.prescription.trim() || " " // Use a space if blank to satisfy backend
+        prescription: form.prescription
       };
 
       // 🔹 Trigger global save for other components (Vitals, Examination, etc.)
@@ -171,7 +180,7 @@ export default function OpdFooterSummary({ id }) {
       
       // The API usually returns the updated object. 
       // We handle both { data: {...} } and {...} structures.
-      const updatedData = response?.data || response;
+      const updatedData = Array.isArray(response?.data) ? response.data[0] : (response?.data || response);
       
       if (updatedData) {
         // Sync local state with the actual data returned by the server
@@ -196,10 +205,7 @@ export default function OpdFooterSummary({ id }) {
       }
     } catch (error) {
       console.error("Error saving OPD summary:", error);
-      const errorMsg = error.response?.data?.errors?.prescription 
-        ? "Prescription notes cannot be blank." 
-        : "Failed to save changes. Please verify all fields.";
-      alert(errorMsg);
+      alert("Failed to save changes. Please verify all fields.");
     } finally {
       setLoading(false);
     }
@@ -228,7 +234,7 @@ export default function OpdFooterSummary({ id }) {
             <div className="flex-1 w-full flex flex-col gap-2">
               <div className="flex flex-col md:flex-row gap-3 items-center w-full">
                 <div className="relative w-full md:w-3/5">
-                  <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                  <div className="flex items-center border border-gray-300 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                     <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Service Name</span>
                     <input
                       type="text"
@@ -255,7 +261,7 @@ export default function OpdFooterSummary({ id }) {
                 </div>
 
                 <div className="relative w-full md:w-1/5">
-                  <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+                  <div className="flex items-center border border-gray-300 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                     <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Price (₹)</span>
                     <input
                       type="text"
@@ -267,7 +273,7 @@ export default function OpdFooterSummary({ id }) {
                   </div>
                 </div>
 
-                <button onClick={handleAddService} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md px-3 py-1.5 transition-all shadow-sm text-sm w-full md:w-1/5 h-[34px]">
+                <button onClick={handleAddService} className="bg-blue-400 hover:bg-blue-500 text-white font-semibold rounded-xl px-4 py-2 transition-all shadow-sm text-sm w-full md:w-1/5 h-[42px] md:h-auto focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                   Add Service
                 </button>
               </div>
@@ -304,7 +310,7 @@ export default function OpdFooterSummary({ id }) {
             <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Payment Details</h2>
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
               
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className="flex items-center border border-gray-300 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Mode</span>
                 <select value={form.payment_mode} onChange={(e) => handleChange("payment_mode", e.target.value)} className="w-full outline-none text-sm bg-transparent appearance-none">
                   <option value="">Select</option>
@@ -312,12 +318,12 @@ export default function OpdFooterSummary({ id }) {
                 </select>
               </div>
 
-              <div className="flex items-center border rounded-md px-2 py-1 bg-gray-50 border-gray-200">
+              <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50">
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Total</span>
                 <input type="text" readOnly value={form.total_amount} className="w-full outline-none text-sm bg-transparent font-bold text-gray-800 cursor-not-allowed" />
               </div>
 
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className="flex items-center border border-gray-300 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Status</span>
                 <select value={form.is_received} onChange={(e) => handleChange("is_received", parseInt(e.target.value))} className="w-full outline-none text-sm bg-transparent appearance-none">
                   {receivedOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -338,7 +344,7 @@ export default function OpdFooterSummary({ id }) {
                 onChange={(e) => handleChange("prescription", e.target.value)} 
                 placeholder="Enter prescription details" 
                 rows={3} 
-                className="w-full bg-white border rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-500 resize-none" 
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" 
               />
             </div>
           </div>
@@ -349,14 +355,14 @@ export default function OpdFooterSummary({ id }) {
           <div className="max-w-7xl mx-auto flex justify-end gap-3 px-4">
             <button 
               onClick={() => navigate(`/opd-prescription/${id}`)} 
-              className="px-5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 active:scale-[0.98]"
+              className="px-5 py-2 rounded-xl bg-indigo-400 hover:bg-indigo-500 text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-indigo-100 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               <Printer size={16} /> Print Prescription
             </button>
-            <button onClick={() => fetchOpd()} className="px-6 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-bold text-[13px] transition-all flex items-center gap-2">
+            <button onClick={() => fetchOpd()} className="px-6 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-bold text-[13px] transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-500/10">
               <X size={16} /> Cancel
             </button>
-            <button onClick={handleSave} disabled={loading} className="px-8 py-1.5 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50 active:scale-[0.98]">
+            <button onClick={handleSave} disabled={loading} className="px-8 py-2 rounded-xl bg-blue-400 hover:bg-blue-500 text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/20">
               {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full"></div> : <Check size={16} />}
               Save Changes
             </button>

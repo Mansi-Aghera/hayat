@@ -182,20 +182,20 @@ export default function OpdVitalsUpdate({ id }) {
   };
 
   return (
-    <div className="w-full px-4 py-1">
+    <div className="w-full px-6 py-1">
       {/* COLLAPSIBLE CONTENT */}
       <div className="overflow-hidden transition-all duration-300 ease-in-out">
         {/* VITALS FORM - Inline title + fields */}
         <div className="">
           <div className="flex items-start gap-4">
             {/* Title - inline */}
-            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Vitals</h2>
+            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">Vitals</h2>
 
             {/* Input fields row */}
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
 
               {/* Blood Pressure */}
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className={`flex items-center border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 ${vitals.BP ? 'bg-blue-50/50 border-blue-300' : 'bg-white border-gray-300'}`}>
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">BP</span>
                 <input
                   ref={bpRef}
@@ -204,13 +204,13 @@ export default function OpdVitalsUpdate({ id }) {
                   value={vitals.BP}
                   onChange={(e) => handleInputChange('BP', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'pr')}
-                  className="w-full outline-none text-sm bg-transparent"
+                  className={`w-full outline-none text-sm bg-transparent ${vitals.BP ? 'text-blue-700 font-bold' : 'text-gray-700'}`}
                   autoFocus
                 />
               </div>
 
               {/* Pulse Rate */}
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className={`flex items-center border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 ${vitals.PR ? 'bg-blue-50/50 border-blue-300' : 'bg-white border-gray-300'}`}>
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">PR</span>
                 <input
                   ref={prRef}
@@ -219,13 +219,13 @@ export default function OpdVitalsUpdate({ id }) {
                   value={vitals.PR}
                   onChange={(e) => handleInputChange('PR', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'spo')}
-                  className="w-full outline-none text-sm bg-transparent"
+                  className={`w-full outline-none text-sm bg-transparent ${vitals.PR ? 'text-blue-700 font-bold' : 'text-gray-700'}`}
                 />
                 <span className="text-gray-400 text-[10px] ml-1">bpm</span>
               </div>
 
               {/* Oxygen Saturation */}
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className={`flex items-center border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 ${vitals.SPO ? 'bg-blue-50/50 border-blue-300' : 'bg-white border-gray-300'}`}>
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">SpO₂</span>
                 <input
                   ref={spoRef}
@@ -234,13 +234,13 @@ export default function OpdVitalsUpdate({ id }) {
                   value={vitals.SPO}
                   onChange={(e) => handleInputChange('SPO', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'sugar')}
-                  className="w-full outline-none text-sm bg-transparent"
+                  className={`w-full outline-none text-sm bg-transparent ${vitals.SPO ? 'text-blue-700 font-bold' : 'text-gray-700'}`}
                 />
                 <span className="text-gray-400 text-[10px] ml-1">%</span>
               </div>
 
               {/* Blood Sugar */}
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className={`flex items-center border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 ${vitals.Sugar ? 'bg-blue-50/50 border-blue-300' : 'bg-white border-gray-300'}`}>
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Sugar</span>
                 <input
                   ref={sugarRef}
@@ -249,12 +249,12 @@ export default function OpdVitalsUpdate({ id }) {
                   value={vitals.Sugar}
                   onChange={(e) => handleInputChange('Sugar', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'temp')}
-                  className="w-full outline-none text-sm bg-transparent"
+                  className={`w-full outline-none text-sm bg-transparent ${vitals.Sugar ? 'text-blue-700 font-bold' : 'text-gray-700'}`}
                 />
               </div>
 
               {/* Temperature */}
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className={`flex items-center border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 ${vitals.Temp ? 'bg-blue-50/50 border-blue-300' : 'bg-white border-gray-300'}`}>
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Temp</span>
                 <input
                   ref={tempRef}
@@ -263,13 +263,13 @@ export default function OpdVitalsUpdate({ id }) {
                   value={vitals.Temp}
                   onChange={(e) => handleInputChange('Temp', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'weight')}
-                  className="w-full outline-none text-sm bg-transparent"
+                  className={`w-full outline-none text-sm bg-transparent ${vitals.Temp ? 'text-blue-700 font-bold' : 'text-gray-700'}`}
                 />
                 <span className="text-gray-400 text-[10px] ml-1">°F</span>
               </div>
 
               {/* Weight */}
-              <div className="flex items-center border rounded-md px-2 py-1 bg-white focus-within:ring-1 focus-within:ring-blue-500">
+              <div className={`flex items-center border rounded-xl px-3 py-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 ${vitals.Weight ? 'bg-blue-50/50 border-blue-300' : 'bg-white border-gray-300'}`}>
                 <span className="text-xs font-semibold text-gray-500 mr-2 whitespace-nowrap">Wt</span>
                 <input
                   ref={weightRef}
@@ -278,7 +278,7 @@ export default function OpdVitalsUpdate({ id }) {
                   value={vitals.Weight}
                   onChange={(e) => handleInputChange('Weight', e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, 'save')}
-                  className="w-full outline-none text-sm bg-transparent"
+                  className={`w-full outline-none text-sm bg-transparent ${vitals.Weight ? 'text-blue-700 font-bold' : 'text-gray-700'}`}
                 />
                 <span className="text-gray-400 text-[10px] ml-1">kg</span>
               </div>

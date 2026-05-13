@@ -214,7 +214,8 @@ export default function OpdMedicineUpdate({ id }) {
   };
 
   const handleAdd = async (overrideForm = null) => {
-    const currentForm = overrideForm || form;
+    // If overrideForm is an event (from onClick), ignore it
+    const currentForm = (overrideForm && overrideForm.medicine_name) ? overrideForm : form;
     if (!currentForm.medicine_name.trim() || !currentForm.quantity || !currentForm.doses || !currentForm.intake_type) {
       if (!overrideForm) alert("Please fill all fields: Medicine, Quantity, Doses, and Intake Type");
       return;
@@ -240,6 +241,7 @@ export default function OpdMedicineUpdate({ id }) {
       setAddResults([]);
       setShowAddDropdown(false);
       await fetchOpd();
+      window.dispatchEvent(new Event('opd_info_updated'));
       medicineInputRef.current?.focus();
     } catch (error) {
       console.error("Error adding medicine:", error);
@@ -254,25 +256,26 @@ export default function OpdMedicineUpdate({ id }) {
         setLoading({ [index]: true });
         await deleteOpdMedicine(id, index);
         await fetchOpd();
+        window.dispatchEvent(new Event('opd_info_updated'));
       } catch (error) {
         console.error("Error deleting medicine:", error);
         alert("Failed to delete medicine");
       } finally {
         setLoading({ [index]: false });
       }
-    };
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 px-6">
-        <h2 className="text-base font-bold text-gray-700 uppercase tracking-tight">Rx (Prescription)</h2>
-      </div>
+    <div className="w-full px-6 py-1">
+      <div className="flex items-start gap-4">
+        {/* Title - inline side label */}
+        <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">RX (Prescription)</h2>
 
-      <div className="overflow-visible">
-        <table className="min-w-full divide-y divide-gray-200 border-y border-gray-100">
-          <thead>
-            <tr className="bg-gray-50/50">
-                <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-16">#</th>
+        <div className="flex-1">
+          <table className="min-w-full divide-y divide-gray-200 border rounded-lg shadow-sm">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-16">#</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Medicine Name</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-32">Doses</th>
                 <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-44">Intake Type</th>
@@ -293,12 +296,12 @@ export default function OpdMedicineUpdate({ id }) {
                     onChange={(e) => handleSearchInput(e.target.value)}
                     onKeyDown={handleMedicineKeyDown}
                     onBlur={() => setTimeout(() => setShowAddDropdown(false), 200)}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                   {showAddDropdown && addResults.length > 0 && (
                     <div 
                       ref={dropdownRef}
-                      className="absolute z-[999] w-[calc(100%+40px)] -left-5 mt-2 bg-slate-50 border border-slate-300 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] max-h-80 overflow-y-auto ring-1 ring-black/5"
+                      className="absolute z-[999] w-[calc(100%+80px)] -left-10 mt-1 bg-white border border-gray-300 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] max-h-80 overflow-y-auto ring-1 ring-black/5"
                     >
                       {addResults.map((med, index) => (
                         <div
@@ -333,7 +336,7 @@ export default function OpdMedicineUpdate({ id }) {
                     value={form.doses}
                     onChange={(e) => setForm({ ...form, doses: e.target.value })}
                     onKeyDown={(e) => handleKeyDown(e, 'intake_type')}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   >
                     <option value="" disabled>Dose</option>
                     {["1-1-0", "1-1-1", "1-0-1", "0-1-1", "0-0-1", "0-1-0", "1-0-0", "SOS", "STAT", "PRN", "HS", "AC", "PC", "BID", "TID", "QID", "QD", "BBF", "BD"].map(d => (
@@ -347,7 +350,7 @@ export default function OpdMedicineUpdate({ id }) {
                     value={form.intake_type}
                     onChange={(e) => setForm({ ...form, intake_type: e.target.value })}
                     onKeyDown={(e) => handleKeyDown(e, 'add')}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   >
                     <option value="" disabled>Type</option>
                     {["Before Meal", "After Meal", "With Meal", "Anytime"].map(t => (
@@ -370,9 +373,9 @@ export default function OpdMedicineUpdate({ id }) {
                 <td className="px-4 py-3 text-right">
                   <button
                     ref={addButtonRef}
-                    onClick={handleAdd}
+                    onClick={() => handleAdd()}
                     disabled={loading.add}
-                    className="bg-blue-600 text-white rounded-lg p-2 hover:bg-blue-700 transition-all shadow-md disabled:opacity-50 active:scale-95 flex items-center justify-center w-10 h-10 ml-auto"
+                    className="bg-blue-400 text-white rounded-xl p-2 hover:bg-blue-500 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center justify-center w-10 h-10 ml-auto"
                     title="Add Medicine"
                   >
                     {loading.add ? (
@@ -432,5 +435,6 @@ export default function OpdMedicineUpdate({ id }) {
           </table>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+}

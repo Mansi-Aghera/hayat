@@ -333,6 +333,7 @@ const handleAdd = async () => {
     setDurationSuggestions([]);
     setShowDurationDropdown(false);
     await fetchOpd();
+    window.dispatchEvent(new Event('opd_info_updated'));
   } catch (error) {
     console.error("Error adding past history:", error);
     alert("Failed to add past history");
@@ -351,6 +352,7 @@ const handleAdd = async () => {
         
         // Refresh the list
         await fetchOpd();
+        window.dispatchEvent(new Event('opd_info_updated'));
         
       } catch (error) {
         console.error("Error deleting past history:", error);
@@ -361,13 +363,13 @@ const handleAdd = async () => {
   };
 
   return (
-    <div className="w-full px-4 py-1">
+    <div className="w-full px-6 py-1">
       {/* ADD SECTION - Inline title + fields */}
         <>
         <div className="">
         <div className="flex items-start gap-4">
           {/* Title - inline */}
-          <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Past History</h2>
+          <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">Past History</h2>
 
           {/* Input fields row */}
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -381,7 +383,7 @@ const handleAdd = async () => {
               onKeyDown={handleHistoryKeyDown}
               onFocus={() => form.past_history_name && handleSearchInput(form.past_history_name)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-              className="border rounded-lg px-4 py-1 w-full"
+              className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               autoFocus
             />
             
@@ -411,7 +413,7 @@ const handleAdd = async () => {
                 onKeyDown={handleDurationKeyDown}
                 onFocus={() => form.durationNumber && handleDurationInput(form.durationNumber)}
                 onBlur={() => setTimeout(() => setShowDurationDropdown(false), 200)}
-                className="border rounded-lg px-4 py-1 w-full"
+                className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
               
               {/* Duration Suggestions Dropdown */}
@@ -450,9 +452,7 @@ const handleAdd = async () => {
                   handleAdd();
                 }
               }}
-              className="w-full bg-blue-600 text-white rounded-lg px-4 py-1 
-                        hover:bg-blue-700 disabled:opacity-50 
-                        disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-blue-400 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-blue-500 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading.add ? (
                 <>
@@ -468,38 +468,7 @@ const handleAdd = async () => {
         </div>
       </div>
 
-      {/* LIST OF PAST HISTORIES */}
-      <div className="mt-2">
-        {opd.past_history.length === 0 ? (
-          ""
-        ) : (
-          <div className="flex flex-wrap gap-2">
-              {opd.past_history.map((item) => (
-                <div
-                  key={item.index}
-                  className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2"
-                >
-                  <span className="font-medium text-blue-800 text-sm">
-                    {item.past_history_name} {item.duration && ` : ${item.duration}`}
-                  </span>
-                  
-                  <button
-                    onClick={() => handleDelete(item.index)}
-                    disabled={loading[item.index]}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full p-1 transition-colors"
-                    title="Delete complaint"
-                  >
-                    {loading[item.index] ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
-                    ) : (
-                      <Trash2 size={14} />
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-        )}
-      </div>
+      {/* LIST REMOVED - NOW IN SIDEBAR */}
       </>
     </div>
   );

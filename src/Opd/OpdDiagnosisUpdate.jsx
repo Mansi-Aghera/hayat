@@ -472,13 +472,13 @@ export default function OpdDiagnosisUpdate({ id }) {
   };
 
   return (
-    <div className="w-full px-4 py-1">
+    <div className="w-full px-6 py-1">
       <>
         {/* ADD SECTION - Inline title + fields */}
         <div className="">
           <div className="flex items-start gap-4">
             {/* Title - inline */}
-            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Diagnosis Detail</h2>
+            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">Diagnosis Detail</h2>
 
             {/* Input fields row */}
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -497,7 +497,7 @@ export default function OpdDiagnosisUpdate({ id }) {
                     }
                   }}
                   onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                  className="border rounded-lg px-4 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   autoFocus
                 />
 
@@ -551,7 +551,7 @@ export default function OpdDiagnosisUpdate({ id }) {
                     }
                   }}
                   onBlur={() => setTimeout(() => setShowDurationDropdown(false), 200)}
-                  className="border rounded-lg px-4 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
 
                 {/* Duration Suggestions Dropdown */}
@@ -597,10 +597,7 @@ export default function OpdDiagnosisUpdate({ id }) {
                       handleAdd();
                     }
                   }}
-                  className="w-full bg-blue-600 text-white rounded-lg px-4 py-1 
-                        hover:bg-blue-700 disabled:opacity-50 
-                        disabled:cursor-not-allowed flex items-center justify-center gap-2
-                        focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-blue-400 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-blue-500 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
                   {loading.add ? (
                     <>

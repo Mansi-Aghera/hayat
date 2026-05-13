@@ -335,6 +335,7 @@ export default function OpdComplaintsUpdate({ id }) {
       setShowDurationDropdown(false);
       
       await fetchOpd();
+      window.dispatchEvent(new Event('opd_info_updated'));
       
     } catch (error) {
       console.error("Error adding complaint:", error);
@@ -354,6 +355,7 @@ export default function OpdComplaintsUpdate({ id }) {
         
         // Refresh the list
         await fetchOpd();
+        window.dispatchEvent(new Event('opd_info_updated'));
         
       } catch (error) {
         console.error("Error deleting complaint:", error);
@@ -380,13 +382,13 @@ export default function OpdComplaintsUpdate({ id }) {
   };
 
   return (
-    <div className="w-full px-4 py-1">
+    <div className="w-full px-6 py-1">
       {/* INLINE HEADER + ADD SECTION */}
         <>
             <div className="">
             <div className="flex items-start gap-4">
               {/* Title - inline */}
-              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-1 w-[150px] flex-shrink-0">Chief Complaints</h2>
+              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">Chief Complaints</h2>
 
               {/* Input fields row */}
               <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -404,7 +406,7 @@ export default function OpdComplaintsUpdate({ id }) {
                         }
                     }}
                     onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                    className="border rounded-lg px-4 py-1.5 w-full text-sm"
+                    className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                     autoFocus
                     />
                     
@@ -434,7 +436,7 @@ export default function OpdComplaintsUpdate({ id }) {
                     onKeyDown={handleDurationKeyDown}
                     onFocus={() => form.durationNumber && handleDurationInput(form.durationNumber)}
                     onBlur={() => setTimeout(() => setShowDurationDropdown(false), 200)}
-                    className="border rounded-lg px-4 py-1.5 w-full text-sm"
+                    className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                   
                   {/* Duration Suggestions Dropdown */}
@@ -469,7 +471,7 @@ export default function OpdComplaintsUpdate({ id }) {
                     setForm({ ...form, optional: e.target.value })
                     }
                     onKeyDown={(e) => handleKeyDown(e, 'add')}
-                    className="border rounded-lg px-4 py-1.5 w-full text-sm"
+                    className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
                </div>
 
@@ -485,9 +487,7 @@ export default function OpdComplaintsUpdate({ id }) {
                       handleAdd();
                     }
                   }}
-                  className="w-full bg-blue-600 text-white rounded-lg px-4 py-1.5 text-sm
-                            hover:bg-blue-700 disabled:opacity-50 
-                            disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-blue-400 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-blue-500 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading.add ? (
                     <>
@@ -503,40 +503,7 @@ export default function OpdComplaintsUpdate({ id }) {
             </div>
         </div>
 
-        {/* LIST OF COMPLAINTS */}
-        <div className="mt-2">
-            
-            {opd.chief_complaints.length === 0 ? (
-            ""
-            ) : (
-            <div className="flex flex-wrap gap-2">
-              {opd.chief_complaints.map((item) => (
-                <div
-                  key={item.index}
-                  className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-4 py-2"
-                >
-                  <span className="font-medium text-blue-800 text-sm">
-                    {item.complaints_data_name} {item.duration &&  ` : ${item.duration}`}
-                    {item.optional && ` : ${item.optional}`}
-                  </span>
-                  
-                  <button
-                    onClick={() => handleDelete(item.index)}
-                    disabled={loading[item.index]}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full p-1 transition-colors"
-                    title="Delete complaint"
-                  >
-                    {loading[item.index] ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
-                    ) : (
-                      <Trash2 size={14} />
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-            )}
-        </div>
+        {/* LIST REMOVED - NOW IN SIDEBAR */}
         </>
     </div>
   );
