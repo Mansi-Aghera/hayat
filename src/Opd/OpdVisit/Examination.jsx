@@ -30,15 +30,15 @@ const ExaminationForm = ({ control }) => {
   };
 
   return (
-    <div>
+    <div className="border-b pb-4">
       {/* All fields in one row - Inline title + fields */}
       <div className="flex items-start gap-4">
-        <h3 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Examination</h3>
+        <h3 className="text-lg font-bold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Examination</h3>
       
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-3">
         {fields.map((field, index) => (
           <div key={field.name}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-tight mb-1">
               {field.label}
             </label>
             <Controller
@@ -49,7 +49,7 @@ const ExaminationForm = ({ control }) => {
                   {...controllerField}
                   ref={el => inputRefs.current[index] = el}
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm font-semibold"
                   placeholder={field.placeholder}
                   onKeyDown={(e) => handleKeyPress(e, index)}
                 />

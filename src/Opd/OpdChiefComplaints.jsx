@@ -186,9 +186,11 @@ export default function OpdComplaintsUpdate({ id }) {
     setComplaintHighlightIndex(-1);
     
     if (value.trim()) {
-      const filtered = complaintList.filter(c =>
-        c.name.toLowerCase().includes(value.toLowerCase())
-      );
+      const searchTerm = value.toLowerCase();
+      const filtered = complaintList
+        .filter(c => (c.name || "").toLowerCase().includes(searchTerm))
+        .slice(0, 50); // Limit to top 50 for instant performance
+      
       setSearchResults(filtered);
       setShowDropdown(true);
     } else {
@@ -401,9 +403,7 @@ export default function OpdComplaintsUpdate({ id }) {
                     onChange={(e) => handleSearchInput(e.target.value)}
                     onKeyDown={handleComplaintKeyDown}
                     onFocus={() => {
-                        if (form.complaints_data_name) {
-                        handleSearchInput(form.complaints_data_name);
-                        }
+                        handleSearchInput(form.complaints_data_name || "");
                     }}
                     onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                     className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
@@ -412,7 +412,7 @@ export default function OpdComplaintsUpdate({ id }) {
                     
                     {/* Dropdown Suggestions */}
                     {showDropdown && searchResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-auto">
                         {searchResults.map((c, index) => (
                         <div
                             key={c.id}
@@ -420,7 +420,7 @@ export default function OpdComplaintsUpdate({ id }) {
                             onMouseEnter={() => setComplaintHighlightIndex(index)}
                             className={`px-4 py-2 cursor-pointer border-b last:border-b-0 ${complaintHighlightIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
                         >
-                            <div className="font-medium">{c.name}</div>
+                            <div className="font-medium text-sm">{c.name}</div>
                         </div>
                         ))}
                     </div>

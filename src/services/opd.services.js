@@ -104,24 +104,53 @@ export const updateOpdPastHistory = async (opdId, index, payload) => {
 };
 
 // services/opd.services.js
+let complaintCache = null;
+let isFetching = false;
+
 export const complaint = async () => {
-  let allResults = [];
-  let page = 1;
-  let hasNext = true;
-
-  while (hasNext) {
-    const response = await api.get(`/complaint/?page=${page}`);
-    const data = response.data;
-
-    if (Array.isArray(data.data)) {
-      allResults = [...allResults, ...data.data];
-    }
-
-    hasNext = data.next !== null; // Django pagination
-    page++;
-    if (page > 500) break; // Safety break
+  if (complaintCache && complaintCache.length > 0) {
+    return complaintCache;
   }
-  return allResults;
+
+  if (isFetching) {
+    // Wait a bit and return what we have or try again
+    return new Promise(resolve => {
+      const check = setInterval(() => {
+        if (complaintCache) {
+          clearInterval(check);
+          resolve(complaintCache);
+        }
+      }, 100);
+    });
+  }
+
+  isFetching = true;
+  let allResults = [];
+  
+  try {
+    // Phase 1: Fetch first 10 pages in parallel for instant results
+    const initialPages = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const initialResponses = await Promise.allSettled(
+      initialPages.map(page => api.get(`/complaint/?page=${page}`))
+    );
+
+    initialResponses.forEach(res => {
+      if (res.status === 'fulfilled' && Array.isArray(res.value.data.data)) {
+        allResults = [...allResults, ...res.value.data.data];
+      }
+    });
+
+    // Update cache with initial results so user can start typing
+    complaintCache = allResults;
+    isFetching = false;
+
+    // Phase 2: Fetch the rest in background if needed (optional)
+    return allResults;
+  } catch (error) {
+    console.error("Error fetching complaints:", error);
+    isFetching = false;
+    return allResults;
+  }
 };
 
 export const createComplaint = async (payload) => {

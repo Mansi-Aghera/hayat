@@ -299,7 +299,7 @@ const HistoryForm = ({ control, watch, setValue }) => {
     <div>
       {/* Add History Form - Inline title + fields */}
       <div className="flex items-start gap-4 mb-4">
-        <h3 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Past History</h3>
+        <h3 className="text-lg font-bold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Past History</h3>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* History Input */}
         <div className="relative">
@@ -429,12 +429,12 @@ const HistoryForm = ({ control, watch, setValue }) => {
               const historyId = item.past_history_data || historyItem?.id || null;
 
               const historyName =
-                historyItem?.name || item?.past_history_data.name || "Unknown History";
+                item.name || historyItem?.name || historyItem?.history_name || "Unknown History";
 
               return (
                 <div
                   key={index}
-                  className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2"
+                  className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1"
                 >
                   {/* History Text */}
                   <span className="font-medium text-emerald-800 text-sm">

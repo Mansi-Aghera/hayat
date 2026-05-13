@@ -98,6 +98,7 @@ const EditOpdVisit = () => {
     <div className="min-h-screen bg-gray-50 py-6">
       <OpdVisitForm
         initialData={initialData}
+        isEdit={true}
         onSubmit={handleSubmit}
         onDelete={handleDelete}
         loading={loading}

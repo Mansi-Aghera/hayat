@@ -100,16 +100,15 @@ const DiagnosisForm = ({ control, watch, setValue }) => {
     setDiagnosisHighlightIndex(-1);
 
     if (value.trim()) {
-      // Ensure diagnosisList is an array before filtering
-      if (Array.isArray(diagnosisList)) {
-        const filtered = diagnosisList.filter(d => {
+      const searchTerm = value.toLowerCase();
+      const filtered = diagnosisList
+        .filter(d => {
           const diagnosisName = d?.diagnosis_name || d?.name || '';
-          return diagnosisName.toLowerCase().includes(value.toLowerCase());
-        });
-        setSearchResults(filtered);
-      } else {
-        setSearchResults([]);
-      }
+          return diagnosisName.toLowerCase().includes(searchTerm);
+        })
+        .slice(0, 50); // Limit to 50 for speed
+      
+      setSearchResults(filtered);
       setShowDiagnosisDropdown(true);
     } else {
       setSearchResults([]);
@@ -297,7 +296,7 @@ const DiagnosisForm = ({ control, watch, setValue }) => {
     <div>
       {/* Add Diagnosis Form - Inline title + fields */}
       <div className="flex items-start gap-4 mb-4">
-        <h3 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Diagnosis</h3>
+        <h3 className="text-lg font-bold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Diagnosis</h3>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Diagnosis Input */}
         <div className="relative">
@@ -430,7 +429,7 @@ const DiagnosisForm = ({ control, watch, setValue }) => {
                 item.diagnosis_data || diagnosisItem?.id || null;
 
               const diagnosisName =
-                diagnosisItem?.diagnosis_name || item.name || "Unknown Diagnosis";
+                item.name || diagnosisItem?.diagnosis_name || "Unknown Diagnosis";
 
               return (
                 <div

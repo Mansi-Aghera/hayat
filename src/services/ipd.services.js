@@ -163,23 +163,36 @@ export const deletePersonalHo = async (ipdId, index) => {
   return response.data;
 }
 
+let complaintCache = null;
+
 export const complaint = async () => {
+  if (complaintCache && complaintCache.length > 0) {
+    return complaintCache;
+  }
+
   let allResults = [];
   let page = 1;
   let hasNext = true;
 
-  while (hasNext) {
-    const response = await api.get(`/complaint/?page=${page}`);
-    const data = response.data;
+  try {
+    while (hasNext) {
+      const response = await api.get(`/complaint/?page=${page}`);
+      const data = response.data;
 
-    if (Array.isArray(data.data)) {
-      allResults = [...allResults, ...data.data];
+      if (Array.isArray(data.data)) {
+        allResults = [...allResults, ...data.data];
+      }
+
+      hasNext = data.next !== null;
+      page++;
+      if (page > 500) break;
     }
-
-    hasNext = data.next !== null; // Django pagination
-    page++;
+    complaintCache = allResults;
+    return allResults;
+  } catch (error) {
+    console.error("Error fetching complaints:", error);
+    return [];
   }
-  return allResults;
 };
 
 export const createComplaint = async (payload) => {

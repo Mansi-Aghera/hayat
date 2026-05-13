@@ -45,7 +45,7 @@ const normalizeInitialData = (data) => {
 
     given_medicine: (data.given_medicine || []).map(m => ({
       medicine_data: normalizeId(m.medicine_data),
-      name: m.name || m.medicine_data?.medicine_name || '',
+      name: m.name || m.medicine_data?.medicine_name || m.medicine_data?.name || '',
       quantity: m.quantity || 1,
       doses: m.doses || '',
       intake_type: m.intake_type || 'After Meal',
@@ -53,7 +53,7 @@ const normalizeInitialData = (data) => {
 
     diagnosis_detail: (data.diagnosis_detail || []).map(d => ({
       diagnosis_data: normalizeId(d.diagnosis_data),
-      name: d.name || d.diagnosis_data?.diagnosis_name || '',
+      name: d.name || d.diagnosis_data?.diagnosis_name || d.diagnosis_data?.name || '',
       duration: d.duration || '',
     })),
 
@@ -67,6 +67,7 @@ const normalizeInitialData = (data) => {
 
     past_history: (data.past_history || []).map(p => ({
       past_history_data: normalizeId(p.past_history_data),
+      name: p.name || p.past_history_data?.name || '',
       duration: p.duration || '',
     })),
 
@@ -85,6 +86,8 @@ const normalizeInitialData = (data) => {
 const OpdVisitForm = ({
   initialData = null,
   opdId = null,
+  patientName = null,
+  isEdit = false,
   onSubmit,
   loading = false,
 }) => {
@@ -95,11 +98,19 @@ const OpdVisitForm = ({
     control,
     handleSubmit,
     setValue,
+    reset,
     watch,
     formState: { errors }
   } = useForm({
     defaultValues: normalizedData,
   });
+
+  // 🔹 Update form when initialData changes (for async loading in AddVisit)
+  useEffect(() => {
+    if (initialData) {
+      reset(normalizeInitialData(initialData));
+    }
+  }, [initialData, reset]);
 
   useEffect(() => {
     if (opdId) {
@@ -175,13 +186,13 @@ const OpdVisitForm = ({
       <div className="bg-white rounded-lg shadow border">
 
         <div className="border-b p-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">
-            {initialData ? 'Edit OPD Visit' : 'New OPD Visit'}
+          <h2 className="text-xl font-bold text-gray-800 uppercase">
+            {isEdit ? 'Edit OPD Visit' : (patientName || 'New OPD Visit')}
           </h2>
         </div>
 
         <div className="p-4">
-          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-5">
 
             {/* OPD ID */}
             <div className="font-bold text-xl">
@@ -196,14 +207,13 @@ const OpdVisitForm = ({
             />
 
             {/* SECTIONS */}
-            <ChiefComplaintsForm control={control} watch={watch} setValue={setValue} />
             <VitalsForm control={control} />
+            <ChiefComplaintsForm control={control} watch={watch} setValue={setValue} />
             <ExaminationForm control={control} />
             <DiagnosisForm control={control} watch={watch} setValue={setValue} />
-            <MedicationsForm control={control} watch={watch} setValue={setValue} />
-
-
             <HistoryForm control={control} watch={watch} setValue={setValue} />
+            
+            <MedicationsForm control={control} watch={watch} setValue={setValue} />
             <AdviceForm control={control} watch={watch} setValue={setValue} />
             <DietForm control={control} watch={watch} setValue={setValue} />
 

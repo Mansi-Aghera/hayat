@@ -259,7 +259,7 @@ const MedicationsForm = ({ control, watch, setValue }) => {
     <div>
       {/* Add Medication Form - Inline title + fields */}
       <div className="flex items-start gap-4 mb-4">
-        <h3 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">RX:</h3>
+        <h3 className="text-lg font-bold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">RX:</h3>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-3">
           {/* Medicine Input */}
           <div className="relative">
@@ -401,39 +401,39 @@ const MedicationsForm = ({ control, watch, setValue }) => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr className="bg-gray-50/80">
-                  <th className="px-4 py-3 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest w-12 text-center">#</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest">Medicine Name</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest w-28 text-center">Doses</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest w-36">Intake Type</th>
-                  <th className="px-4 py-3 text-center text-[11px] font-black text-gray-400 uppercase tracking-widest w-20">Qty</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-black text-gray-400 uppercase tracking-widest w-20">Action</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest w-12 text-center">#</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest">Medicine Name</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest w-28 text-center">Doses</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-black text-gray-400 uppercase tracking-widest w-36">Intake Type</th>
+                  <th className="px-3 py-2 text-center text-[11px] font-black text-gray-400 uppercase tracking-widest w-20">Qty</th>
+                  <th className="px-3 py-2 text-right text-[11px] font-black text-gray-400 uppercase tracking-widest w-20">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {medications.map((item, index) => {
                   const medicineItem = medicineList.find(m => m.id === item.medicine_data);
-                  const medicineName = formatMedicineName(medicineItem) || item.name || 'Unknown';
+                  const medicineName = item.name || formatMedicineName(medicineItem) || 'Unknown';
 
                   return (
                     <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 text-xs font-bold text-gray-400 text-center">
+                      <td className="px-3 py-1.5 text-xs font-bold text-gray-400 text-center">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-1.5">
                         <div className="font-bold text-gray-800 text-sm leading-tight uppercase">{medicineName}</div>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3 py-1.5 text-center">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase ${item.doses === 'STAT' || item.doses === 'SOS' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
                           {item.doses}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[12px] font-semibold text-gray-500">
+                      <td className="px-3 py-1.5 text-[12px] font-semibold text-gray-500">
                         {item.intake_type}
                       </td>
-                      <td className="px-4 py-3 text-sm font-black text-center text-gray-900">
+                      <td className="px-3 py-1.5 text-sm font-black text-center text-gray-900">
                         {item.quantity}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 py-1.5 text-right">
                         {/* Hidden fields – REQUIRED for form submit */}
                         <div className="hidden">
                           <Controller

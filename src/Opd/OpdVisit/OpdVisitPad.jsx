@@ -309,6 +309,20 @@ const VisitPad = ({ opdId }) => {
               )}
             </CompactCard>
 
+            {/* Medical History */}
+            {selectedVisit.past_history?.length > 0 && (
+              <CompactCard title="Medical History" icon={History}>
+                <div className="space-y-1">
+                  {selectedVisit.past_history.map((history, index) => (
+                    <div key={index} className="flex justify-between items-center text-sm">
+                      <span>{history.past_history_data?.name}</span>
+                      <span className="text-gray-600 text-xs">{history.duration}</span>
+                    </div>
+                  ))}
+                </div>
+              </CompactCard>
+            )}
+
             {/* Prescriptions - Compact */}
             <CompactCard title="Prescriptions" icon={Pill}>
               {selectedVisit.given_medicine?.length > 0 ? (
@@ -337,24 +351,9 @@ const VisitPad = ({ opdId }) => {
               ) : (
                 <div className="text-sm text-gray-400 text-center">
                   No prescriptions available
-                </div>
+                 </div>
               )}
             </CompactCard>
-
-
-            {/* Medical History */}
-            {selectedVisit.past_history?.length > 0 && (
-              <CompactCard title="Medical History" icon={History}>
-                <div className="space-y-1">
-                  {selectedVisit.past_history.map((history, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm">
-                      <span>{history.past_history_data?.name}</span>
-                      <span className="text-gray-600 text-xs">{history.duration}</span>
-                    </div>
-                  ))}
-                </div>
-              </CompactCard>
-            )}
 
             {/* Advice */}
             {selectedVisit.adviced?.length > 0 && (

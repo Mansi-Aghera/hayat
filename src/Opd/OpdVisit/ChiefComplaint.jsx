@@ -97,9 +97,11 @@ const ChiefComplaintsForm = ({ control, watch, setValue }) => {
     setComplaintHighlightIndex(-1);
 
     if (value.trim()) {
-      const filtered = complaintList.filter(c =>
-        (c?.name || '').toLowerCase().includes(value.toLowerCase())
-      );
+      const searchTerm = value.toLowerCase();
+      const filtered = complaintList
+        .filter(c => (c?.name || '').toLowerCase().includes(searchTerm))
+        .slice(0, 50); // Limit to 50 for instant performance
+      
       setSearchResults(filtered);
       setShowComplaintDropdown(true);
     } else {
@@ -294,7 +296,7 @@ const ChiefComplaintsForm = ({ control, watch, setValue }) => {
     <div>
       {/* Add Complaint Form - Inline title + fields */}
       <div className="flex items-start gap-4 mb-4">
-        <h3 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Chief Complaints</h3>
+        <h3 className="text-lg font-bold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Chief Complaints</h3>
         <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
         {/* Complaint Input */}
         <div className="relative">
@@ -304,7 +306,7 @@ const ChiefComplaintsForm = ({ control, watch, setValue }) => {
             placeholder="Type complaint name"
             value={addForm.complaint_name}
             onChange={(e) => handleComplaintSearch(e.target.value)}
-            onFocus={() => addForm.complaint_name && handleComplaintSearch(addForm.complaint_name)}
+            onFocus={() => handleComplaintSearch(addForm.complaint_name || '')}
             onBlur={() => setTimeout(() => setShowComplaintDropdown(false), 200)}
             onKeyDown={handleComplaintKeyDown}
             className="w-full px-3 py-2.5 border rounded-md text-sm"

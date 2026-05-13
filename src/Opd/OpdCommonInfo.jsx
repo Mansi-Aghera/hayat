@@ -11,19 +11,24 @@ import {
 } from "lucide-react";
 import { getOpdById } from "../services/opd.services";
 
-const OpdPatientInfo = ({ opdId }) => {
-  const [opd, setOpd] = useState(null);
-   useEffect(() => {
-    fetchOpd();
-  }, [opdId]);
+const OpdPatientInfo = ({ opdId, data = null }) => {
+  const [opd, setOpd] = useState(data);
+
+  useEffect(() => {
+    if (data) {
+      setOpd(data);
+    } else if (opdId) {
+      fetchOpd();
+    }
+  }, [opdId, data]);
 
   // 🔹 FETCH OPD DETAILS
   const fetchOpd = async () => {
     try {
       const res = await getOpdById(opdId);
       setOpd(res.data)
-    }catch(err){
-        console.log(err)
+    } catch (err) {
+      console.log(err)
     }
   }
 
