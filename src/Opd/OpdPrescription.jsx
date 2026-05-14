@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Printer } from "lucide-react";
 import { getOpdById } from "../services/opd.services";
 
@@ -8,11 +8,24 @@ const OpdPrescription = () => {
   const navigate = useNavigate();
   const [opd, setOpd] = useState(null);
 
+  const { search } = useLocation();
+  const printParam = new URLSearchParams(search).get("print");
+
   useEffect(() => {
     getOpdById(id).then((res) => {
       setOpd(res.data);
     });
   }, [id]);
+
+  // Auto-print if print parameter is true
+  useEffect(() => {
+    if (opd && printParam === "true") {
+      const timer = setTimeout(() => {
+        window.print();
+      }, 1000); // Wait for content/styles to load
+      return () => clearTimeout(timer);
+    }
+  }, [opd, printParam]);
 
   if (!opd) return null;
 

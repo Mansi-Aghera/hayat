@@ -44,6 +44,7 @@ export default function Opd() {
   const itemsPerPage = 10;
   const API_PAGE_SIZE = 100;
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -166,33 +167,40 @@ export default function Opd() {
   // ── Background Full Load ────────────────────────────────────────────────
   useEffect(() => {
     const loadEverythingInBackground = async () => {
+      if (isFullyLoaded) return;
+      setIsBackgroundLoading(true);
       try {
-        // Initial quick load is already handled by fetchOpds calling on mount.
-        // This background task will ensure we have the WHOLE database for instant search.
         const firstRes = await getOpds({ page: 1, page_size: API_PAGE_SIZE });
         const count = firstRes.data.count || 0;
         const totalPages = Math.ceil(count / API_PAGE_SIZE);
         let fullData = [...(firstRes.data.data || [])];
+        
+        // Initial update
+        setAllRawRecords([...fullData]);
 
         const BATCH = 20;
         for (let p = 2; p <= totalPages; p += BATCH) {
           const batchNums = Array.from({ length: Math.min(BATCH, totalPages - p + 1) }, (_, i) => p + i);
           const results = await Promise.all(batchNums.map(n => getOpds({ page: n, page_size: API_PAGE_SIZE })));
           results.forEach(r => { fullData = [...fullData, ...(r.data.data || [])]; });
+          
+          // Incremental update so search works as we load
+          setAllRawRecords([...fullData]);
         }
         
-        setAllRawRecords(fullData);
         setIsFullyLoaded(true);
         console.log("Database fully loaded in background:", fullData.length, "records.");
       } catch (err) {
         console.error("Background loading failed:", err);
+      } finally {
+        setIsBackgroundLoading(false);
+        setIsFullyLoaded(true); // Stop loader even on failure
       }
     };
     
-    // Small delay to let the initial UI render first
     const timer = setTimeout(loadEverythingInBackground, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isFullyLoaded]);
 
   // ── Local Filtering & UI Update ──────────────────────────────────────────
   useEffect(() => {
@@ -553,6 +561,12 @@ export default function Opd() {
                </h2>
                 <p className="text-gray-500 text-xs font-medium mt-0.5">
                    {search.trim() ? "All dates included" : "Filtered data"} • {totalCount} patients
+                    {isBackgroundLoading && (
+                      <span className="ml-2 text-indigo-500 inline-flex items-center gap-1 font-semibold">
+                         <span className="w-1 h-1 bg-indigo-500 rounded-full animate-ping"></span>
+                         Searching database...
+                      </span>
+                    )}
                 </p>
              </div>
              <div className="flex gap-2">
@@ -646,12 +660,12 @@ export default function Opd() {
                 </thead>
 
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {loading ? (
+                  {loading || (opds.length === 0 && isBackgroundLoading && debouncedSearch.trim()) ? (
                     <tr>
                       <td colSpan="6" className="py-8 text-center text-sm text-gray-500 italic">
                         <div className="flex justify-center items-center">
                           <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2"></div>
-                          Loading data...
+                          {loading ? "Loading data..." : `Finding "${debouncedSearch}" in database...`}
                         </div>
                       </td>
                     </tr>

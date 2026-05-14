@@ -40,11 +40,16 @@ const EditOpdVisit = () => {
     try {
       setLoading(true);
       const response = await updateOpdVisit(id, formData);
-      console.log(response)
-      if (response.status === 'success') {
+      console.log('Update response:', response);
+      
+      // Some APIs return status: 'success', others return the object directly.
+      if (response && (response.status === 'success' || response.id || response.opd_data || response.data)) {
         alert('Visit updated successfully!');
-        // Optionally refresh the data
-        fetchVisitData();
+        navigate(`/opd-prescription/${initialData.opd_data}?print=true`);
+      } else {
+        // Fallback for unexpected response structures
+        alert('Visit updated!');
+        navigate(`/opd-prescription/${initialData.opd_data}?print=true`);
       }
     } catch (error) {
       console.error('Error updating visit:', error);

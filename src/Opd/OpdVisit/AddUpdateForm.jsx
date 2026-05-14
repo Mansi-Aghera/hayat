@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Save } from 'lucide-react';
+import { Save, Printer } from 'lucide-react';
 
 import ChiefComplaintsForm from './ChiefComplaint';
 import VitalsForm from './Vital';
@@ -217,6 +217,18 @@ const OpdVisitForm = ({
             <AdviceForm control={control} watch={watch} setValue={setValue} />
             <DietForm control={control} watch={watch} setValue={setValue} />
 
+            {/* ERRORS */}
+            {Object.keys(errors).length > 0 && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                <p className="font-bold mb-1">Please fix the following errors:</p>
+                <ul className="list-disc pl-5">
+                  {Object.entries(errors).map(([key, error]) => (
+                    <li key={key}>{key}: {error.message || 'Required'}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* ACTIONS */}
             <div className="flex justify-end space-x-3">
               <button
@@ -227,13 +239,17 @@ const OpdVisitForm = ({
                 Cancel
               </button>
 
-              <button
+               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center shadow-lg hover:bg-blue-700 transition-all active:scale-95"
               >
-                <Save className="w-4 h-4 mr-2" />
-                {loading ? 'Saving...' : 'Save Visit'}
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full mr-2"></div>
+                ) : (
+                  <Printer className="w-4 h-4 mr-2" />
+                )}
+                {loading ? 'Saving...' : 'Save and Print'}
               </button>
             </div>
 

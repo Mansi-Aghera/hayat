@@ -3,7 +3,7 @@
 const PRINT_STYLES = `
   @page { 
     size: auto; 
-    margin: 6cm 1.5cm 1.5cm 2.5cm; 
+    margin: 0; 
   }
   body { 
     font-family: 'Helvetica', 'Arial', sans-serif; 
@@ -15,9 +15,13 @@ const PRINT_STYLES = `
     line-height: 1.4;
   }
   .page-container {
-    padding: 0;
+    padding: 1.5cm 1.5cm 1.5cm 2.5cm;
     width: 100%;
     margin: 0 auto;
+    box-sizing: border-box;
+  }
+  .first-page {
+    padding-top: 6cm !important;
   }
   .page-break {
     page-break-after: always;
@@ -103,7 +107,7 @@ const generatePrintContent = (d) => {
         <style>${PRINT_STYLES}</style>
       </head>
       <body>
-        <div class="page-container page-break">
+        <div class="page-container page-break first-page">
           <table class="main-table">
             <tbody>
               <tr class="bg-highlight">

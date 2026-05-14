@@ -66,10 +66,12 @@ const AddOpdVisit = () => {
         formData.opd_data = parseInt(opdId);
       }
       
-      await createOpdVisit(formData);
+      console.log('Submitting OPD Visit:', formData);
+      const res = await createOpdVisit(formData);
+      console.log('Server response:', res);
       alert('Visit created successfully!');
-      // Navigate back to OPD visit page
-      navigate(`/opd-visit/${opdId}`);
+      // Navigate to prescription page with print flag
+      navigate(`/opd-prescription/${opdId}?print=true`);
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to create visit');
