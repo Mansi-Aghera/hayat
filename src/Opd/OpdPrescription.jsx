@@ -29,168 +29,235 @@ const OpdPrescription = () => {
 
   if (!opd) return null;
 
+  const currentDateTime = new Date().toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+
   return (
     <div className="max-w-4xl mx-auto p-4 bg-gray-50 min-h-screen font-sans text-gray-800 print:bg-white print:p-0 print:m-0">
-      {/* INTERNAL PRINT STYLES */}
+      {/* SURGICAL PRINT STYLES */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          /* Hide everything outside the prescription component */
-          header, nav, aside, footer, .print-hidden { 
-            display: none !important; 
+          /* HIDE SIDEBAR, ADMIN HEADER, AND ACTION BUTTONS */
+          aside, 
+          nav, 
+          .print-hidden,
+          div[class*="md:hidden flex items-center p-4 bg-white border-b"],
+          .flex.h-screen.overflow-hidden > div:first-child,
+          .bg-indigo-800,
+          button {
+            display: none !important;
+          }
+
+          /* HIDE SCROLLBARS */
+          * {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+          *::-webkit-scrollbar {
+            display: none !important;
           }
           
-          /* Remove browser headers and footers (Localhost, Date, Title) */
           @page { 
-            margin: 5mm; 
+            margin: 0; 
             size: auto;
           }
           
           body { 
-            background: white; 
-            margin: 0; 
+            background: white !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
           }
 
-          /* Ensure the container takes full width and removes shadows */
-          .prescription-card {
-            border: 1px solid #e5e7eb !important;
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+          }
+
+          .prescription-content {
+            border: none !important;
             box-shadow: none !important;
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
+            padding: 15mm !important;
           }
         }
+
+        /* Typography matching Image 1 */
+        .rx-title { font-weight: 800; color: #000; font-size: 18px; }
+        .section-label { font-weight: 900; font-size: 13px; color: #000; text-transform: uppercase; }
+        .data-text { font-size: 13px; color: #000; line-height: 1.5; }
+        .rx-mark { font-size: 24px; font-weight: 900; margin-bottom: 8px; color: #000; }
+        
+        /* Medicine table matching Image 2 */
+        .medicine-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 5px;
+          border: 1.5px solid #000;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .medicine-table th { 
+          background-color: #d1d5db !important; 
+          color: #000; 
+          font-weight: 900; 
+          font-size: 12px;
+          text-align: center;
+          padding: 10px;
+          border: 1.5px solid #000;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .medicine-table td { 
+          border: 1.5px solid #000;
+          padding: 12px 10px;
+          font-size: 12px;
+          vertical-align: middle;
+          color: #000;
+        }
+        .med-name { font-weight: 800; font-size: 13px; text-transform: uppercase; color: #000; }
+        .med-sub { font-size: 11px; color: #333; margin-top: 4px; font-weight: 500; }
       `}} />
 
       {/* ===== ACTION BAR (Hidden on Print) ===== */}
       <div className="flex gap-2 mb-4 print-hidden">
         <button 
           onClick={() => navigate(-1)} 
-          className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 transition-all text-sm"
         >
           <ArrowLeft size={18} /> Back
         </button>
         <button 
           onClick={() => window.print()} 
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all text-sm"
         >
           <Printer size={18} /> Print Prescription
         </button>
       </div>
 
-      {/* ===== PRESCRIPTION CONTAINER ===== */}
-      <div className="prescription-card bg-white shadow-sm border rounded-xl overflow-hidden print:rounded-none">
+      {/* ===== PRESCRIPTION CONTENT ===== */}
+      <div className="prescription-content bg-white shadow-sm border rounded-xl p-8 print:shadow-none print:border-none print:rounded-none">
         
-        {/* 1. PATIENT HEADER */}
-        <div className="p-4 border-b bg-white">
+        {/* 1. PATIENT HEADER BOX */}
+        <div className="border border-black rounded-xl p-4 mb-8">
           <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-xl font-bold uppercase text-gray-900 tracking-tight">
-                {opd.patient_name} <span className="text-gray-500 font-normal">({opd.age} / {opd.gender})</span>
-              </h2>
-              <p className="text-sm font-medium text-gray-600">{opd.mobile_no}</p>
-              <p className="text-xs text-gray-500 leading-tight uppercase">{opd.address}</p>
-              <p className="text-xs font-bold text-gray-400 mt-1">UHID: P{opd.id}</p>
+            <div className="space-y-1">
+              <h1 className="rx-title">
+                {opd.id} : {opd.patient_name} ({opd.age}/{opd.gender})
+              </h1>
+              <p className="data-text font-bold">
+                {opd.address} / {opd.mobile_no}
+              </p>
             </div>
-            <div className="text-right">
-              <div className="text-sm font-medium text-gray-600">
-                Date: <span className="text-gray-900">{opd.date}</span>
-              </div>
-              <div className="text-xs font-bold text-gray-500 uppercase">Bill: {opd.id}</div>
-              <div className="text-sm font-bold text-indigo-700 mt-1 uppercase">Dr: {opd.doctor_data?.doctor_name}</div>
+            <div className="text-right space-y-1">
+              <p className="data-text font-bold">{opd.date} {opd.time || ""}</p>
+              <p className="data-text font-bold uppercase">UHID : HP{opd.id}</p>
             </div>
           </div>
         </div>
 
-        {/* 2. THREE-COLUMN CARDS (Complaints, Vitals, Exam) */}
-        <div className="grid grid-cols-3 gap-3 p-4 bg-gray-50/50 border-b">
-          
-          <div className="bg-white border rounded-xl p-3 shadow-sm">
-            <h4 className="text-[13px] font-bold text-indigo-900 mb-1 border-b pb-1">Chief Complaints:</h4>
-            <div className="text-xs text-gray-600 space-y-1">
+        {/* 2. THREE-COLUMN DATA */}
+        <div className="grid grid-cols-3 gap-6 mb-10">
+          <div>
+            <h4 className="section-label mb-2">CHIEF COMPLAINTS:</h4>
+            <div className="data-text">
               {opd.chief_complaints?.length > 0 ? opd.chief_complaints.map((c, i) => (
-                <p key={i}>• {c.complaints_data.name}</p>
-              )) : "No Fresh Complaints"}
+                <p key={i}>{c.complaints_data.name}</p>
+              )) : <p>None</p>}
             </div>
           </div>
 
-          <div className="bg-white border rounded-xl p-3 shadow-sm">
-            <h4 className="text-[13px] font-bold text-indigo-900 mb-1 border-b pb-1">Vitals:</h4>
-            <div className="grid grid-cols-1 gap-1 text-[11px] text-gray-600">
-              <p><span className="font-bold text-gray-400">BP:</span> {opd.vitals?.BP}</p>
-              <p><span className="font-bold text-gray-400">PR:</span> {opd.vitals?.PR || "--"}</p>
-              <p><span className="font-bold text-gray-400">SPO2:</span> {opd.vitals?.SPO}%</p>
-              <p><span className="font-bold text-gray-400">Sugar:</span> {opd.vitals?.Sugar}</p>
-              <p><span className="font-bold text-gray-400">Weight:</span> {opd.vitals?.Weight} kg</p>
-              <p><span className="font-bold text-gray-400">Temp:</span> {opd.vitals?.Temp}°F</p>
+          <div>
+            <h4 className="section-label mb-2">VITALS:</h4>
+            <div className="data-text">
+              <p>BP: {opd.vitals?.BP || "-"}</p>
+              <p>PR: {opd.vitals?.PR || "-"}</p>
+              <p>SPO2: {opd.vitals?.SPO || "-"}</p>
+              <p>Sugar: {opd.vitals?.Sugar || "-"}</p>
+              <p>Weight: {opd.vitals?.Weight || "-"}</p>
             </div>
           </div>
 
-          <div className="bg-white border rounded-xl p-3 shadow-sm">
-            <h4 className="text-[13px] font-bold text-indigo-900 mb-1 border-b pb-1">Examination:</h4>
-            <div className="text-[11px] text-gray-600 space-y-1">
-               <p><span className="font-bold text-gray-400">RS:</span> {opd.examination?.RS}</p>
-               <p><span className="font-bold text-gray-400">CVS:</span> {opd.examination?.CVS}</p>
-               <p><span className="font-bold text-gray-400">CNS:</span> {opd.examination?.CNS}</p>
-               <p><span className="font-bold text-gray-400">PA:</span> {opd.examination?.PA}</p>
+          <div>
+            <h4 className="section-label mb-2">EXAMINATION:</h4>
+            <div className="data-text">
+              <p>RS: {opd.examination?.RS || "-"}</p>
+              <p>CVS: {opd.examination?.CVS || "-"}</p>
+              <p>CNS: {opd.examination?.CNS || "-"}</p>
+              <p>PA: {opd.examination?.PA || "-"}</p>
+              <p>Other: {opd.examination?.Other || "-"}</p>
             </div>
           </div>
         </div>
 
-        {/* 3. HISTORY & DIAGNOSIS */}
-        <div className="p-4 space-y-3">
-          <div className="border rounded-lg px-3 py-2 text-sm bg-white">
-            <span className="font-bold text-gray-700">Past History:</span>
-            <span className="ml-2 text-gray-600 italic">
+        {/* 3. PAST HISTORY */}
+        <div className="mb-10">
+          <p className="data-text font-bold flex gap-2">
+            <span>PAST HISTORY:</span>
+            <span className="font-normal">
               {opd.past_history?.map(p => p.past_history_data.name).join(", ") || "None"}
             </span>
-          </div>
-
-          <div className="border rounded-lg px-3 py-2 text-sm bg-white">
-            <span className="font-bold text-gray-700">Diagnosis:</span>
-            <span className="ml-2 text-gray-600 font-medium">
-              {opd.diagnosis_detail?.map(d => d.diagnosis_data.diagnosis_name).join(", ") || "None"}
-            </span>
-          </div>
-
-          {/* 4. MEDICINE TABLE (Rx) */}
-          <div className="border rounded-lg overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-100 text-gray-700 uppercase text-[11px] font-bold">
-                <tr>
-                  <th className="px-4 py-2 border-r w-12 text-center">SR</th>
-                  <th className="px-4 py-2 border-r">Medicine Name</th>
-                  <th className="px-4 py-2 border-r text-center">Dose</th>
-                  <th className="px-4 py-2 border-r">Timing</th>
-                  <th className="px-4 py-2 text-center">Qty</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {opd.given_medicine?.map((m, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 border-r text-center text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-2 border-r font-bold text-indigo-900">{m.medicine_data.medicine_name}</td>
-                    <td className="px-4 py-2 border-r text-center font-mono bg-yellow-50/50">{m.doses}</td>
-                    <td className="px-4 py-2 border-r text-gray-600 text-xs">{m.intake_type}</td>
-                    <td className="px-4 py-2 text-center font-bold text-gray-700">{m.quantity}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* 5. FOOTER DETAILS */}
-          <div className="space-y-1 text-sm pt-2">
-            <p><span className="font-bold">Advice:</span> <span className="text-gray-600">{opd.adviced?.map(a => a.opinion_details_data.opinion_name).join(", ") || "-"}</span></p>
-            <p><span className="font-bold">Next Visit:</span> <span className="text-gray-600">{opd.nextVisit?.map(d => d.visit).join(", ") || "-"}</span></p>
-            <p><span className="font-bold">Noted:</span> <span className="text-gray-600">{opd.Note?.map(n => n.opinion_details_data.opinion_name).join(", ") || "-"}</span></p>
-          </div>
+          </p>
         </div>
 
-        {/* 6. SIGNATURE */}
-        <div className="p-8 mt-10 flex justify-end">
-          <div className="text-center border-t-2 border-dotted border-gray-300 pt-3 min-w-[220px]">
-            <p className="font-bold text-indigo-900 text-lg">Dr. {opd.doctor_data?.doctor_name}</p>
-            <p className="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Authorized Medical Officer</p>
+        {/* 4. MEDICINE SECTION (Matching Image 2) */}
+        <div className="mb-10">
+          <div className="rx-mark">Rx:</div>
+          <table className="medicine-table">
+            <thead>
+              <tr>
+                <th className="w-12">Sr</th>
+                <th>Medicine</th>
+                <th className="w-32">Meal Time</th>
+                <th className="w-24">Dosage</th>
+                <th className="w-16">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {opd.given_medicine?.length > 0 ? opd.given_medicine.map((m, i) => {
+                const doseParts = m.doses?.split('-') || [];
+                return (
+                  <tr key={i}>
+                    <td className="text-center">{i + 1}</td>
+                    <td>
+                      <p className="med-name">{m.medicine_data.medicine_name}</p>
+                      {doseParts.length === 3 && (
+                        <p className="med-sub">
+                          Morning: {doseParts[0]} | Afternoon: {doseParts[1]} | Evening: {doseParts[2]}
+                        </p>
+                      )}
+                    </td>
+                    <td className="text-center font-medium">{m.intake_type}</td>
+                    <td className="text-center font-bold">{m.doses}</td>
+                    <td className="text-center font-bold">{m.quantity}</td>
+                  </tr>
+                );
+              }) : (
+                <tr>
+                  <td colSpan="5" className="text-center py-4 text-gray-400 font-medium">No medicines prescribed</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 5. FOOTER / SIGNATURE */}
+        <div className="mt-auto pt-20 flex flex-col items-end">
+          <div className="w-64 text-center border-t border-black pt-2">
+            <p className="section-label">DOCTOR SIGNATURE</p>
+            <p className="text-[10px] text-gray-500 mt-4">
+              Generated: {currentDateTime}
+            </p>
           </div>
         </div>
 
@@ -198,5 +265,4 @@ const OpdPrescription = () => {
     </div>
   );
 };
-
 export default OpdPrescription;
