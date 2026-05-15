@@ -87,6 +87,15 @@ const onlyTime = (dateStr) => {
   });
 };
 
+const formatDosage = (dosage) => {
+  if (!dosage) return "";
+  const parts = dosage.split("-");
+  if (parts.length === 3) {
+    return `Morning: ${parts[0]} | Afternoon: ${parts[1]} | Evening: ${parts[2]}`;
+  }
+  return dosage;
+};
+
 const generatePrintContent = (d) => {
   const diagnosisStr = (d.diagnosis || []).map(x => x.diagnosis_name || x.name).join(", ").toUpperCase();
   const clinicalNotesStr = (d.clinical_notes || []).map(x => x.opinion_name || x.name).join(", ").toUpperCase();
@@ -193,7 +202,7 @@ const generatePrintContent = (d) => {
               ${(d.Rx || []).length > 0 ? (d.Rx || []).map((r, i) => `
                 <tr>
                   <td class="text-center">${i + 1}</td>
-                  <td class="text-bold">${(r.medicine_data?.medicine_name || r.medicine_name || "").toUpperCase()}<br/><small style="font-weight: 400">${r.intake_type || ""}</small></td>
+                  <td class="text-bold">${(r.medicine_data?.medicine_name || r.medicine_name || "").toUpperCase()}<br/><small style="font-weight: 400">${formatDosage(r.doses || r.dosage)}</small></td>
                   <td>${(r.medicine_data?.meal_time || r.meal_time || "AFTER MEAL").toUpperCase()}</td>
                   <td>${(r.doses || r.dosage || "STAT").toUpperCase()}</td>
                   <td class="text-center">${r.quantity || "1"}</td>
