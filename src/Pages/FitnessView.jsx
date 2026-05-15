@@ -83,7 +83,7 @@ const FitnessView = () => {
 
         @media print {
           /* HIDE EVERYTHING EXCEPT THE CERTIFICATE */
-          header, nav, aside, footer, .print-hidden, .md\\:hidden, 
+          header, nav, aside, footer, .print-hidden, .print\:hidden, .md\:hidden, 
           [class*="sidebar"], [class*="Sidebar"], 
           .fixed, .sticky { 
             display: none !important; 
@@ -122,7 +122,7 @@ const FitnessView = () => {
             width: 210mm !important;
             min-height: 297mm !important;
             margin: 0 auto !important;
-            padding-top: 5cm !important;
+            padding-top: 1.5cm !important;
             padding-left: 1.5cm !important;
             padding-right: 1.5cm !important;
             padding-bottom: 1.5cm !important;
@@ -130,6 +130,7 @@ const FitnessView = () => {
             border: none !important;
             box-sizing: border-box !important;
             display: block !important;
+            overflow: visible !important;
           }
 
           .table-certificate th, .table-certificate td {

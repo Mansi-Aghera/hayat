@@ -32,8 +32,16 @@ export default function ReferCertificateView() {
        <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           /* Hide everything outside the prescription component */
-          header, nav, aside, footer, .print-hidden { 
+          header, nav, aside, footer, .print-hidden, .print\:hidden { 
             display: none !important; 
+          }
+
+          /* Force hide scrollbars and fix layout */
+          html, body, main, #root, .flex-1 {
+            overflow: visible !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           
           /* Remove browser headers and footers (Localhost, Date, Title) */
@@ -54,12 +62,13 @@ export default function ReferCertificateView() {
             width: 210mm !important;
             min-height: 297mm !important;
             margin: 0 !important;
-            padding-top: 6cm !important;
+            padding-top: 1.5cm !important;
             padding-left: 2.5cm !important;
             padding-right: 1.5cm !important;
             padding-bottom: 1.5cm !important;
             border-radius: 0 !important;
             box-sizing: border-box !important;
+            overflow: visible !important;
           }
           .certificate-card h1 { font-size: 20px !important; }
           .certificate-card h2 { font-size: 16px !important; }

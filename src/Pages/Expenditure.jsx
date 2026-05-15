@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Trash2, ChevronLeft, ChevronRight, X, Edit, ArrowLeft } from "lucide-react";
+import { Eye, Trash2, ChevronLeft, ChevronRight, X, Edit, ArrowLeft, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getExpenditure, updateExpenditure, createExpenditure } from "../services/certificates.services";
 import { getDoctors } from "../services/doctor.services";
+import { handleExpenditurePrint } from "../utils/expenditurePrint";
 
 /* ------------------ Helpers ------------------ */
 const extractId = (item) => item?.id || item?._id;
@@ -167,9 +168,10 @@ export default function ExpenditureManagement() {
                   <td className="px-6 py-4 text-sm text-slate-600">{item.suffering}</td>
                   <td className="px-6 py-4 text-sm font-bold text-indigo-600">{item.needs}</td>
                   <td className="px-6 py-4 flex gap-2">
-                    <button onClick={() => navigate(`/expenditure-view/${extractId(item)}`)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={20}/></button>
-                    <button onClick={() => handleEditClick(item)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg"><Edit size={20}/></button>
-                    <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={20}/></button>                 
+                    <button onClick={() => navigate(`/expenditure-view/${extractId(item)}`)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="View"><Eye size={20}/></button>
+                    <button onClick={() => handleExpenditurePrint(item)} className="p-2 text-[#008080] hover:bg-teal-50 rounded-lg" title="Print"><Printer size={20}/></button>
+                    <button onClick={() => handleEditClick(item)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Edit"><Edit size={20}/></button>
+                    <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 size={20}/></button>                 
                   </td>
                 </tr>
               ))}

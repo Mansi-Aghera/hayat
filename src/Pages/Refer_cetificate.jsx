@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Eye, X, Edit, Search, Plus, DeleteIcon, Trash2, ArrowLeft } from "lucide-react";
+import { Eye, X, Edit, Search, Plus, DeleteIcon, Trash2, ArrowLeft, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getRefer, updateRefer, createRefer } from "../services/certificates.services";
 import { getDoctors } from "../services/doctor.services";
+import { handleReferPrint } from "../utils/referPrint";
 
 /* ------------------ Helpers ------------------ */
 const extractId = (item) => item?.id || item?._id;
@@ -165,9 +166,10 @@ export default function ReferralManagement() {
                   <td className="px-6 py-4 text-sm font-bold text-indigo-600">{item.refer_to}</td>
                   <td className="px-6 py-4 text-sm text-slate-600 font-medium">{item.doctor_data?.doctor_name}</td>
                   <td className="px-6 py-4 flex gap-2">
-                    <button onClick={() => navigate(`/refer-view/${extractId(item)}`)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Eye size={20}/></button>
-                    <button onClick={() => handleEditClick(item)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"><Edit size={20}/></button>
-                    <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={20}/></button>
+                    <button onClick={() => navigate(`/refer-view/${extractId(item)}`)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View"><Eye size={20}/></button>
+                    <button onClick={() => handleReferPrint(item)} className="p-2 text-[#008080] hover:bg-teal-50 rounded-lg transition-colors" title="Print"><Printer size={20}/></button>
+                    <button onClick={() => handleEditClick(item)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Edit"><Edit size={20}/></button>
+                    <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete"><Trash2 size={20}/></button>
                   </td>
                 </tr>
               ))}

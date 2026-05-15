@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Trash2, ChevronLeft, ChevronRight, X, Pencil, ArrowLeft } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, X, Pencil, ArrowLeft, Printer, Eye } from "lucide-react";
 import { getFC, updateFC, createFC, getFCComplaints, getFCPastHistory, getFCPersonalHO } from "../services/certificates.services";
 import { useNavigate } from "react-router-dom";
+import { handleFitnessPrint } from "../utils/fitnessPrint";
 
 /* ------------------ Helpers ------------------ */
 const extractId = (item) => item?.id || item?._id;
@@ -442,16 +443,22 @@ export default function Staff() {
 
   const actionButtons = (fcItem) => [
     {
-      label: "Update",
-      icon: Pencil,
+      label: "View",
+      icon: Eye,
       color: "bg-blue-600 hover:bg-blue-700",
-      onClick: () => handleUpdate(fcItem)
+      onClick: () => navigate(`/fitness-view/${extractId(fcItem)}`)
     },
     {
       label: "Print",
-      icon: Trash2,
+      icon: Printer,
+      color: "bg-[#008080] hover:bg-teal-700",
+      onClick: () => handleFitnessPrint(fcItem)
+    },
+    {
+      label: "Update",
+      icon: Pencil,
       color: "bg-green-600 hover:bg-green-700",
-      onClick: () => navigate(`/fitness-view/${extractId(fcItem)}`) // Navigate to view page
+      onClick: () => handleUpdate(fcItem)
     },
   ];
 
@@ -964,7 +971,7 @@ export default function Staff() {
                                 className={`${btn.color} text-white p-1.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md`}
                                 title={btn.label}
                               >
-                                {btn.label}
+                                <Icon size={16} />
                               </button>
                             );
                           })}

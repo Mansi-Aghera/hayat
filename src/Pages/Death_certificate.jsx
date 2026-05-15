@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Trash2, ChevronLeft, ChevronRight, X, Edit, ArrowLeft } from "lucide-react";
+import { Eye, Trash2, ChevronLeft, ChevronRight, X, Edit, ArrowLeft, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getDeath, updateDeath, createDeath } from "../services/certificates.services";
 import { getDoctors } from "../services/doctor.services";
+import { handleDeathPrint } from "../utils/deathPrint";
 
 /* ------------------ Helpers ------------------ */
 const extractId = (item) => item?.id || item?._id;
@@ -219,9 +220,10 @@ export default function DeathManagement() {
                     <td className="px-4 py-4 text-sm text-red-600 font-bold">{item.expired_datetime}</td>
                     <td className="px-4 py-4 text-sm">{item.doctor_data?.doctor_name}</td>
                     <td className="px-4 py-4 flex gap-2">
-                      <button onClick={() => navigate(`/death-view/${extractId(item)}`)} className="bg-blue-600 text-white p-2 rounded-lg"><Eye size={18}/></button>
-                      <button onClick={() => handleEditClick(item)} className="bg-green-600 text-white p-2 rounded-lg"><Edit size={18}/></button>
-                      <button onClick={() => handleDelete(item)} className="bg-red-600 text-white p-2 rounded-lg"><Trash2 size={18}/></button>
+                      <button onClick={() => navigate(`/death-view/${extractId(item)}`)} className="bg-blue-600 text-white p-2 rounded-lg" title="View"><Eye size={18}/></button>
+                      <button onClick={() => handleDeathPrint(item)} className="bg-[#008080] text-white p-2 rounded-lg" title="Print"><Printer size={18}/></button>
+                      <button onClick={() => handleEditClick(item)} className="bg-green-600 text-white p-2 rounded-lg" title="Edit"><Edit size={18}/></button>
+                      <button onClick={() => handleDelete(item)} className="bg-red-600 text-white p-2 rounded-lg" title="Delete"><Trash2 size={18}/></button>
                     </td>
                   </tr>
                 ))}
