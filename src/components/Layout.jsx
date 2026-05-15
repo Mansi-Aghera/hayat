@@ -25,7 +25,7 @@ export default function Layout() {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Mobile Menu Toggle (Only visible on mobile) */}
-        <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-40">
+        <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-40 print:hidden">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}

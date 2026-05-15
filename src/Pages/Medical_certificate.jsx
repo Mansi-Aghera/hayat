@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Eye, X, Edit, Search, Plus,Trash2, ArrowLeft } from "lucide-react";
+import { Eye, X, Edit, Search, Plus, Trash2, ArrowLeft, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getMedical, updateMedical, createMedical } from "../services/certificates.services";
 import { getDoctors } from "../services/doctor.services";
+import { handleMedicalPrint } from "../utils/medicalPrint";
 
 /* ------------------ Helpers ------------------ */
 const extractId = (item) => item?.id || item?._id;
@@ -188,6 +189,7 @@ export default function MedicalManagement() {
                   <td className="px-6 py-4 text-sm text-indigo-600 font-bold">{item.rest_for}</td>
                   <td className="px-6 py-4 flex gap-2">
                     <button onClick={() => navigate(`/medical-view/${extractId(item)}`)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Eye size={20}/></button>
+                    <button onClick={() => handleMedicalPrint(item)} className="p-2 text-[#008080] hover:bg-teal-50 rounded-lg" title="Print"><Printer size={20}/></button>
                     <button onClick={() => handleEditClick(item)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg"><Edit size={20}/></button>
                     <button onClick={() => handleDelete(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={20}/></button>
                   </td>
