@@ -4,7 +4,15 @@ import { getOpdById, diagnosis, updateOpd, createDiagnosis, deleteOpdDiagnosis, 
 
 export default function OpdDiagnosisUpdate({ id }) {
   const [opd, setOpd] = useState({ diagnosis_detail: [] });
-  const [diagnosisList, setDiagnosisList] = useState([]);
+  const [diagnosisList, setDiagnosisList] = useState(() => {
+    const cached = localStorage.getItem("master_diagnosis");
+    try {
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [isDiagnosisLoading, setIsDiagnosisLoading] = useState(false);
   const [loading, setLoading] = useState({});
 
   // ADD FORM
@@ -201,6 +209,12 @@ export default function OpdDiagnosisUpdate({ id }) {
 
   // 🔹 FETCH MASTER DIAGNOSIS
   const fetchDiagnosis = async () => {
+    // Already initialized from cache in useState
+    const cached = localStorage.getItem("master_diagnosis");
+    if (!cached) {
+      setIsDiagnosisLoading(true);
+    }
+
     try {
       const res = await diagnosis();
       let data = [];
@@ -214,9 +228,13 @@ export default function OpdDiagnosisUpdate({ id }) {
       }
 
       setDiagnosisList(data);
+      // Update cache
+      localStorage.setItem("master_diagnosis", JSON.stringify(data));
     } catch (error) {
       console.error("Error fetching diagnosis:", error);
-      setDiagnosisList([]);
+      if (!cached) setDiagnosisList([]);
+    } finally {
+      setIsDiagnosisLoading(false);
     }
   };
 
@@ -229,7 +247,20 @@ export default function OpdDiagnosisUpdate({ id }) {
       const filtered = diagnosisList.filter(d =>
         d.diagnosis_name?.toLowerCase().includes(value.toLowerCase())
       );
-      setSearchResults(filtered);
+      
+      // Filter out duplicates by name
+      const uniqueResults = [];
+      const seenNames = new Set();
+      
+      filtered.forEach(d => {
+        const name = d.diagnosis_name?.toLowerCase().trim();
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          uniqueResults.push(d);
+        }
+      });
+
+      setSearchResults(uniqueResults);
       setShowDropdown(true);
     } else {
       setSearchResults([]);
@@ -528,10 +559,20 @@ export default function OpdDiagnosisUpdate({ id }) {
                 )}
 
                 {/* No results message */}
-                {showDropdown && form.diagnosis_name && searchResults.length === 0 && (
+                {showDropdown && form.diagnosis_name && searchResults.length === 0 && !isDiagnosisLoading && (
                   <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-3">
                     <div className="text-gray-500">
                       No matches found. Press "Enter" to move to duration, or click "Add" to create "{form.diagnosis_name}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading message */}
+                {showDropdown && isDiagnosisLoading && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-3">
+                    <div className="text-gray-500 flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      Searching...
                     </div>
                   </div>
                 )}

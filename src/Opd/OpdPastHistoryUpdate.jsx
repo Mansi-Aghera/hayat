@@ -5,7 +5,15 @@ import { Trash2 } from "lucide-react";
 export default function OpdPastHistoryUpdate({id}) {
 
   const [opd, setOpd] = useState({ past_history: [] });
-  const [pastHistoryList, setPastHistoryList] = useState([]);
+  const [pastHistoryList, setPastHistoryList] = useState(() => {
+    const cached = localStorage.getItem("master_past_history");
+    try {
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [isPastHistoryLoading, setIsPastHistoryLoading] = useState(false);
   const [loading, setLoading] = useState({});
 
   // ADD FORM
@@ -160,6 +168,12 @@ export default function OpdPastHistoryUpdate({id}) {
 
   // 🔹 FETCH MASTER PAST HISTORY
   const fetchPastHistory = async () => {
+    // Already initialized from cache in useState
+    const cached = localStorage.getItem("master_past_history");
+    if (!cached) {
+      setIsPastHistoryLoading(true);
+    }
+
     try {
       const res = await pastHistory();
       let data = [];
@@ -173,9 +187,13 @@ export default function OpdPastHistoryUpdate({id}) {
       }
 
       setPastHistoryList(data);
+      // Update cache
+      localStorage.setItem("master_past_history", JSON.stringify(data));
     } catch (error) {
       console.error("Error fetching past history:", error);
-      setPastHistoryList([]);
+      if (!cached) setPastHistoryList([]);
+    } finally {
+      setIsPastHistoryLoading(false);
     }
   };
 
@@ -186,9 +204,22 @@ export default function OpdPastHistoryUpdate({id}) {
     
     if (value.trim()) {
       const filtered = pastHistoryList.filter(ph =>
-        ph.name.toLowerCase().includes(value.toLowerCase())
+        ph.name?.toLowerCase().includes(value.toLowerCase())
       );
-      setSearchResults(filtered);
+      
+      // Filter out duplicates by name
+      const uniqueResults = [];
+      const seenNames = new Set();
+      
+      filtered.forEach(ph => {
+        const name = ph.name?.toLowerCase().trim();
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          uniqueResults.push(ph);
+        }
+      });
+
+      setSearchResults(uniqueResults);
       setShowDropdown(true);
     } else {
       setSearchResults([]);
@@ -400,6 +431,25 @@ const handleAdd = async () => {
                     <div className="font-medium">{ph.name}</div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* No results message */}
+            {showDropdown && form.past_history_name && searchResults.length === 0 && !isPastHistoryLoading && (
+              <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-3">
+                <div className="text-gray-500 text-sm">
+                  No matches found.
+                </div>
+              </div>
+            )}
+
+            {/* Loading message */}
+            {showDropdown && isPastHistoryLoading && (
+              <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-3">
+                <div className="text-gray-500 text-sm flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  Searching...
+                </div>
               </div>
             )}
           </div>

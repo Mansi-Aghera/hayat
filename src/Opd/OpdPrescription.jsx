@@ -167,89 +167,123 @@ const OpdPrescription = () => {
         </div>
 
         {/* 2. THREE-COLUMN DATA */}
-        <div className="grid grid-cols-3 gap-6 mb-10">
-          <div>
-            <h4 className="section-label mb-2">CHIEF COMPLAINTS:</h4>
-            <div className="data-text">
-              {opd.chief_complaints?.length > 0 ? opd.chief_complaints.map((c, i) => (
-                <p key={i}>{c.complaints_data.name}</p>
-              )) : <p>None</p>}
-            </div>
-          </div>
+        {/* 2. THREE-COLUMN DATA - Only show if at least one has data */}
+        {(opd.chief_complaints?.length > 0 || 
+          (opd.vitals && Object.values(opd.vitals).some(v => v && v !== "-")) || 
+          (opd.examination && Object.values(opd.examination).some(v => v && v !== "-"))) && (
+          <div className="grid grid-cols-3 gap-6 mb-10">
+            {opd.chief_complaints?.length > 0 && (
+              <div>
+                <h4 className="section-label mb-2">CHIEF COMPLAINTS:</h4>
+                <div className="data-text">
+                  {opd.chief_complaints.map((c, i) => (
+                    <p key={i}>{c.complaints_data?.name}</p>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          <div>
-            <h4 className="section-label mb-2">VITALS:</h4>
-            <div className="data-text">
-              <p>BP: {opd.vitals?.BP || "-"}</p>
-              <p>PR: {opd.vitals?.PR || "-"}</p>
-              <p>SPO2: {opd.vitals?.SPO || "-"}</p>
-              <p>Sugar: {opd.vitals?.Sugar || "-"}</p>
-              <p>Weight: {opd.vitals?.Weight || "-"}</p>
-            </div>
-          </div>
+            {opd.vitals && Object.values(opd.vitals).some(v => v && v !== "-") && (
+              <div>
+                <h4 className="section-label mb-2">VITALS:</h4>
+                <div className="data-text">
+                  {opd.vitals.BP && opd.vitals.BP !== "-" && <p>BP: {opd.vitals.BP}</p>}
+                  {opd.vitals.PR && opd.vitals.PR !== "-" && <p>PR: {opd.vitals.PR}</p>}
+                  {opd.vitals.SPO && opd.vitals.SPO !== "-" && <p>SPO2: {opd.vitals.SPO}</p>}
+                  {opd.vitals.Sugar && opd.vitals.Sugar !== "-" && <p>Sugar: {opd.vitals.Sugar}</p>}
+                  {opd.vitals.Weight && opd.vitals.Weight !== "-" && <p>Weight: {opd.vitals.Weight}</p>}
+                </div>
+              </div>
+            )}
 
-          <div>
-            <h4 className="section-label mb-2">EXAMINATION:</h4>
-            <div className="data-text">
-              <p>RS: {opd.examination?.RS || "-"}</p>
-              <p>CVS: {opd.examination?.CVS || "-"}</p>
-              <p>CNS: {opd.examination?.CNS || "-"}</p>
-              <p>PA: {opd.examination?.PA || "-"}</p>
-              <p>Other: {opd.examination?.Other || "-"}</p>
-            </div>
+            {opd.examination && Object.values(opd.examination).some(v => v && v !== "-") && (
+              <div>
+                <h4 className="section-label mb-2">EXAMINATION:</h4>
+                <div className="data-text">
+                  {opd.examination.RS && opd.examination.RS !== "-" && <p>RS: {opd.examination.RS}</p>}
+                  {opd.examination.CVS && opd.examination.CVS !== "-" && <p>CVS: {opd.examination.CVS}</p>}
+                  {opd.examination.CNS && opd.examination.CNS !== "-" && <p>CNS: {opd.examination.CNS}</p>}
+                  {opd.examination.PA && opd.examination.PA !== "-" && <p>PA: {opd.examination.PA}</p>}
+                  {opd.examination.Other && opd.examination.Other !== "-" && <p>Other: {opd.examination.Other}</p>}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* 3. PAST HISTORY */}
-        <div className="mb-10">
-          <p className="data-text font-bold flex gap-2">
-            <span>PAST HISTORY:</span>
-            <span className="font-normal">
-              {opd.past_history?.map(p => p.past_history_data.name).join(", ") || "None"}
-            </span>
-          </p>
-        </div>
+        {/* 3. PAST HISTORY & DIAGNOSIS */}
+        {(opd.past_history?.length > 0 || opd.diagnosis_detail?.length > 0) && (
+          <div className="mb-10 space-y-4">
+            {opd.past_history?.length > 0 && (
+              <p className="data-text font-bold flex gap-2">
+                <span>PAST HISTORY:</span>
+                <span className="font-normal">
+                  {opd.past_history.map(p => p.past_history_data?.name).join(", ")}
+                </span>
+              </p>
+            )}
+            
+            {opd.diagnosis_detail?.length > 0 && (
+              <p className="data-text font-bold flex gap-2">
+                <span>DIAGNOSIS:</span>
+                <span className="font-normal">
+                  {opd.diagnosis_detail.map(d => d.diagnosis_data?.diagnosis_name).join(", ")}
+                </span>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* 4. MEDICINE SECTION (Matching Image 2) */}
-        <div className="mb-10">
-          <div className="rx-mark">Rx:</div>
-          <table className="medicine-table">
-            <thead>
-              <tr>
-                <th className="w-12">Sr</th>
-                <th>Medicine</th>
-                <th className="w-32">Meal Time</th>
-                <th className="w-24">Dosage</th>
-                <th className="w-16">Qty</th>
-              </tr>
-            </thead>
-            <tbody>
-              {opd.given_medicine?.length > 0 ? opd.given_medicine.map((m, i) => {
-                const doseParts = m.doses?.split('-') || [];
-                return (
-                  <tr key={i}>
-                    <td className="text-center">{i + 1}</td>
-                    <td>
-                      <p className="med-name">{m.medicine_data.medicine_name}</p>
-                      {doseParts.length === 3 && (
-                        <p className="med-sub">
-                          Morning: {doseParts[0]} | Afternoon: {doseParts[1]} | Evening: {doseParts[2]}
-                        </p>
-                      )}
-                    </td>
-                    <td className="text-center font-medium">{m.intake_type}</td>
-                    <td className="text-center font-bold">{m.doses}</td>
-                    <td className="text-center font-bold">{m.quantity}</td>
-                  </tr>
-                );
-              }) : (
+        {opd.given_medicine?.length > 0 && (
+          <div className="mb-10">
+            <div className="rx-mark">Rx:</div>
+            <table className="medicine-table">
+              <thead>
                 <tr>
-                  <td colSpan="5" className="text-center py-4 text-gray-400 font-medium">No medicines prescribed</td>
+                  <th className="w-12">Sr</th>
+                  <th>Medicine</th>
+                  <th className="w-32">Meal Time</th>
+                  <th className="w-24">Dosage</th>
+                  <th className="w-16">Qty</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {opd.given_medicine.map((m, i) => {
+                  const doseParts = m.doses?.split('-') || [];
+                  return (
+                    <tr key={i}>
+                      <td className="text-center">{i + 1}</td>
+                      <td>
+                        <p className="med-name">{m.medicine_data?.medicine_name}</p>
+                        {doseParts.length === 3 && (
+                          <p className="med-sub">
+                            Morning: {doseParts[0]} | Afternoon: {doseParts[1]} | Evening: {doseParts[2]}
+                          </p>
+                        )}
+                      </td>
+                      <td className="text-center font-medium">{m.intake_type}</td>
+                      <td className="text-center font-bold">{m.doses}</td>
+                      <td className="text-center font-bold">{m.quantity}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 6. ADVICE / OPINION */}
+        {opd.adviced?.length > 0 && (
+          <div className="mb-10">
+            <h4 className="section-label mb-2">ADVICE / OPINION:</h4>
+            <div className="data-text">
+              {opd.adviced.map((a, i) => (
+                <p key={i}>• {a.opinion_details_data?.opinion_name}</p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 5. FOOTER / SIGNATURE */}
         <div className="mt-auto pt-20 flex flex-col items-end">

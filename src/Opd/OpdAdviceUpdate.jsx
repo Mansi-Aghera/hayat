@@ -4,7 +4,15 @@ import { getOpdById, opinion, updateOpd, createOpinion, deleteOpdOpinion, update
 
 export default function OpdAdviceUpdate({ id }) {
   const [opd, setOpd] = useState({ adviced: [] });
-  const [opinionList, setOpinionList] = useState([]);
+  const [opinionList, setOpinionList] = useState(() => {
+    const cached = localStorage.getItem("master_opinion");
+    try {
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [isAdviceLoading, setIsAdviceLoading] = useState(false);
   const [loading, setLoading] = useState({});
 
   // ADD FORM
@@ -85,6 +93,12 @@ export default function OpdAdviceUpdate({ id }) {
 
   // 🔹 FETCH MASTER OPINION
   const fetchOpinion = async () => {
+    // Already initialized from cache in useState
+    const cached = localStorage.getItem("master_opinion");
+    if (!cached) {
+      setIsAdviceLoading(true);
+    }
+
     try {
       const res = await opinion();
       let data = [];
@@ -98,9 +112,13 @@ export default function OpdAdviceUpdate({ id }) {
       }
 
       setOpinionList(data);
+      // Update cache
+      localStorage.setItem("master_opinion", JSON.stringify(data));
     } catch (error) {
       console.error("Error fetching opinion:", error);
-      setOpinionList([]);
+      if (!cached) setOpinionList([]);
+    } finally {
+      setIsAdviceLoading(false);
     }
   };
 
@@ -113,7 +131,20 @@ export default function OpdAdviceUpdate({ id }) {
       const filtered = opinionList.filter(o =>
         o.opinion_name?.toLowerCase().includes(value.toLowerCase())
       );
-      setSearchResults(filtered);
+      
+      // Filter out duplicates by name
+      const uniqueResults = [];
+      const seenNames = new Set();
+      
+      filtered.forEach(o => {
+        const name = o.opinion_name?.toLowerCase().trim();
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          uniqueResults.push(o);
+        }
+      });
+
+      setSearchResults(uniqueResults);
       setShowDropdown(true);
     } else {
       setSearchResults([]);
@@ -297,10 +328,20 @@ export default function OpdAdviceUpdate({ id }) {
                 )}
                 
                 {/* No results message */}
-                {showDropdown && form.opinion_name && searchResults.length === 0 && (
+                {showDropdown && form.opinion_name && searchResults.length === 0 && !isAdviceLoading && (
                   <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-3">
-                    <div className="text-gray-500">
+                    <div className="text-gray-500 text-sm">
                       No matches found. Press "Add" to create "{form.opinion_name}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading message */}
+                {showDropdown && isAdviceLoading && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-3">
+                    <div className="text-gray-500 text-sm flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      Searching...
                     </div>
                   </div>
                 )}

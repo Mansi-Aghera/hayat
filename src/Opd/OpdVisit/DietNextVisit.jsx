@@ -10,6 +10,49 @@ const DietNextVisitForm = ({ control, watch, setValue }) => {
   const [dietList, setDietList] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // State for Next Visit Suggestions
+  const [nextVisitInput, setNextVisitInput] = useState('');
+  const [visitSuggestions, setVisitSuggestions] = useState([]);
+  const [showVisitSuggestions, setShowVisitSuggestions] = useState(false);
+  const visitInputRef = useRef(null);
+  const timeUnits = ["hours", "days", "weeks", "months", "years"];
+
+  // 🔹 CALCULATE FUTURE DATE
+  const calculateFutureDate = (value, unit) => {
+    const now = new Date();
+    const futureDate = new Date(now);
+    
+    switch(unit.toLowerCase()) {
+      case 'hours':
+        futureDate.setHours(now.getHours() + parseInt(value));
+        break;
+      case 'days':
+        futureDate.setDate(now.getDate() + parseInt(value));
+        break;
+      case 'weeks':
+        futureDate.setDate(now.getDate() + (parseInt(value) * 7));
+        break;
+      case 'months':
+        futureDate.setMonth(now.getMonth() + parseInt(value));
+        break;
+      case 'years':
+        futureDate.setFullYear(now.getFullYear() + parseInt(value));
+        break;
+      default:
+        return now;
+    }
+    
+    return futureDate;
+  };
+
+  const handleVisitSelect = (suggestion) => {
+    const futureDate = calculateFutureDate(suggestion.value, suggestion.unit);
+    const dateString = futureDate.toISOString().split('T')[0];
+    addNextVisit(dateString, suggestion.text);
+    setNextVisitInput('');
+    setShowVisitSuggestions(false);
+  };
+
   // State for new diet
   const [newDietName, setNewDietName] = useState('');
   const [dietSearchResults, setDietSearchResults] = useState([]);
@@ -184,8 +227,13 @@ const DietNextVisitForm = ({ control, watch, setValue }) => {
   };
 
   // Add next visit
-  const addNextVisit = (dateString = '') => {
+  const addNextVisit = (dateString = '', visitLabel = '') => {
     const formattedDate = dateString ? formatVisitDate(dateString) : { visit: '', datetime: '' };
+    
+    // If we have a custom label (like "4 days"), use it for 'visit' instead of the formatted date
+    if (visitLabel) {
+      formattedDate.visit = visitLabel;
+    }
     
     setValue('nextVisit', [...nextVisits, formattedDate]);
   };
@@ -313,22 +361,47 @@ const DietNextVisitForm = ({ control, watch, setValue }) => {
         <div className="flex items-start gap-4 mb-3">
           <h4 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 min-w-[140px]">Next Visit</h4>
           <div className="flex-1 flex gap-3">
-            <div className="flex-1">
-              <button
-                type="button"
-                onClick={() => addNextVisit()}
-                className="w-full px-3 py-2.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium flex items-center justify-center gap-2"
-              >
-                <Calendar size={16} />
-                <span>Add New Date Field</span>
-              </button>
+            <div className="relative flex-1">
+              <input
+                ref={visitInputRef}
+                type="text"
+                placeholder="Enter number (e.g., 6)"
+                value={nextVisitInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNextVisitInput(val);
+                  const num = parseInt(val);
+                  if (val && !isNaN(num) && num > 0) {
+                    setVisitSuggestions(timeUnits.map(u => ({ text: `${num} ${u}`, unit: u, value: num })));
+                    setShowVisitSuggestions(true);
+                  } else {
+                    setShowVisitSuggestions(false);
+                  }
+                }}
+                onBlur={() => setTimeout(() => setShowVisitSuggestions(false), 200)}
+                className="w-full px-3 py-2.5 border rounded-md text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+              />
+              
+              {showVisitSuggestions && visitSuggestions.length > 0 && (
+                <div className="absolute z-30 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                  {visitSuggestions.map((s, i) => (
+                    <div
+                      key={i}
+                      onMouseDown={() => handleVisitSelect(s)}
+                      className="px-4 py-2.5 hover:bg-blue-50 cursor-pointer border-b last:border-0 font-medium text-sm"
+                    >
+                      {s.text}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Next Visit Dates List */}
         {nextVisits.length > 0 && (
-          <div className="ml-[156px] space-y-3">
+          <div className="ml-[156px] flex flex-wrap gap-2">
             {nextVisits.map((visit, index) => {
               const dateValue = visit.datetime ? 
                 new Date(
@@ -338,38 +411,20 @@ const DietNextVisitForm = ({ control, watch, setValue }) => {
                 ).toISOString().split('T')[0] : '';
 
               return (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center">
-                      <Calendar className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <input
-                        type="date"
-                        value={dateValue}
-                        min={getMinDate()}
-                        onChange={(e) => updateNextVisit(index, e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        onKeyPress={handleDateKeyPress}
-                      />
-                    </div>
-                    
-                    <button
-                      type="button"
-                      onClick={() => removeNextVisit(index)}
-                      className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 rounded"
-                      title="Remove date"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                <div key={index} className="inline-flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-full px-5 py-2 transition-all hover:bg-purple-100/50">
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-sm font-bold text-gray-800 uppercase">Next Visit : {visit.visit}</span>
+                    <span className="text-[10px] text-purple-600 font-bold">{visit.datetime}</span>
                   </div>
-
-                  {visit.visit && visit.datetime && (
-                    <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-md p-3">
-                      <div className="flex-1">
-                        <div className="font-medium text-purple-800">{visit.visit}</div>
-                        <div className="text-sm text-purple-600">{visit.datetime}</div>
-                      </div>
-                    </div>
-                  )}
+                  
+                  <button
+                    type="button"
+                    onClick={() => removeNextVisit(index)}
+                    className="text-red-400 hover:text-red-600 p-1 transition-colors"
+                    title="Remove date"
+                  >
+                    <Trash2 size={14} />
+                  </button>
 
                   <div className="hidden">
                     <Controller

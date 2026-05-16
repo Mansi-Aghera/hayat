@@ -5,7 +5,15 @@ import { Trash2 } from "lucide-react";
 export default function OpdComplaintsUpdate({ id }) {
 
   const [opd, setOpd] = useState({ chief_complaints: [] });
-  const [complaintList, setComplaintList] = useState([]);
+  const [complaintList, setComplaintList] = useState(() => {
+    const cached = localStorage.getItem("master_complaints");
+    try {
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [isComplaintsLoading, setIsComplaintsLoading] = useState(false);
   const [loading, setLoading] = useState({});
 
   // ADD FORM
@@ -160,6 +168,12 @@ export default function OpdComplaintsUpdate({ id }) {
 
   // 🔹 FETCH MASTER COMPLAINTS
   const fetchComplaints = async () => {
+    // Already initialized from cache in useState
+    const cached = localStorage.getItem("master_complaints");
+    if (!cached) {
+      setIsComplaintsLoading(true);
+    }
+
     try {
       const res = await complaint();
       let data = [];
@@ -173,10 +187,14 @@ export default function OpdComplaintsUpdate({ id }) {
       }
 
       setComplaintList(data);
+      // Update cache
+      localStorage.setItem("master_complaints", JSON.stringify(data));
       console.log("Complaint list loaded:", data.length);
     } catch (error) {
       console.error("Error fetching complaints:", error);
-      setComplaintList([]);
+      if (!cached) setComplaintList([]);
+    } finally {
+      setIsComplaintsLoading(false);
     }
   };
 
@@ -191,7 +209,19 @@ export default function OpdComplaintsUpdate({ id }) {
         .filter(c => (c.name || "").toLowerCase().includes(searchTerm))
         .slice(0, 50); // Limit to top 50 for instant performance
       
-      setSearchResults(filtered);
+      // Filter out duplicates by name
+      const uniqueResults = [];
+      const seenNames = new Set();
+      
+      filtered.forEach(c => {
+        const name = c.name?.toLowerCase().trim();
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          uniqueResults.push(c);
+        }
+      });
+      
+      setSearchResults(uniqueResults);
       setShowDropdown(true);
     } else {
       setSearchResults([]);
@@ -424,6 +454,25 @@ export default function OpdComplaintsUpdate({ id }) {
                         </div>
                         ))}
                     </div>
+                    )}
+
+                    {/* No results message */}
+                    {showDropdown && form.complaints_data_name && searchResults.length === 0 && !isComplaintsLoading && (
+                      <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-3">
+                        <div className="text-gray-500 text-sm">
+                          No matches found.
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Loading message */}
+                    {showDropdown && isComplaintsLoading && (
+                      <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-3">
+                        <div className="text-gray-500 text-sm flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                          Searching...
+                        </div>
+                      </div>
                     )}
                 </div>
                 {/* Duration Input with Suggestions */}
