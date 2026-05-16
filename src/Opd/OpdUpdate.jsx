@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { getOpdById, updateOpd } from "../services/opd.services";
 import OpdPastHistoryUpdate from "./OpdPastHistoryUpdate";
 import OpdComplaintsUpdate from "./OpdChiefComplaints";
 import OpdVitalsUpdate from "./OpdVitalsUpdate";
@@ -17,6 +19,38 @@ import OpdSummarySidebar from "./OpdSummarySidebar";
 export default function OpdUpdate() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [opd, setOpd] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOpd();
+  }, [id]);
+
+  const fetchOpd = async () => {
+    try {
+      setLoading(true);
+      const res = await getOpdById(id);
+      const data = Array.isArray(res.data) ? res.data[0] : res.data;
+      setOpd(data);
+    } catch (error) {
+      console.error("Error fetching OPD:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLocalUpdate = (newData) => {
+    setOpd(prev => ({ ...prev, ...newData }));
+  };
+
+  if (loading || !opd) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full px-6 pb-8">
       {/* 1. Sticky Header - Compact Patient Information */}
@@ -32,40 +66,40 @@ export default function OpdUpdate() {
 
               {/* Chief Complaints Section */}
               <div className="py-4 border-b border-gray-100">
-                <OpdComplaintsUpdate id={id} />
+                <OpdComplaintsUpdate id={id} data={opd.chief_complaints} onUpdate={(val) => handleLocalUpdate({ chief_complaints: val })} />
               </div>
 
               {/* Vitals Section */}
               <div className="py-4 border-b border-gray-100 bg-gray-50/50">
-                <OpdVitalsUpdate id={id} />
+                <OpdVitalsUpdate id={id} data={opd.vitals} onUpdate={(val) => handleLocalUpdate({ vitals: val })} />
               </div>
 
               {/* Examination Section */}
               <div className="py-4 border-b border-gray-100">
-                <OpdExaminationUpdate id={id} />
+                <OpdExaminationUpdate id={id} data={opd.examination} onUpdate={(val) => handleLocalUpdate({ examination: val })} />
               </div>
 
               {/* Past History Section */}
               <div className="py-4 border-b border-gray-100 bg-gray-50/50">
-                <OpdPastHistoryUpdate id={id} />
+                <OpdPastHistoryUpdate id={id} data={opd.past_history} onUpdate={(val) => handleLocalUpdate({ past_history: val })} />
               </div>
 
               {/* Diagnosis Section */}
               <div className="py-4 border-b border-gray-100">
-                <OpdDiagnosisUpdate id={id} />
+                <OpdDiagnosisUpdate id={id} data={opd.diagnosis_detail} onUpdate={(val) => handleLocalUpdate({ diagnosis_detail: val })} />
               </div>
 
               {/* Medicine Section */}
               <div className="py-4 border-b border-gray-100 bg-blue-50/20">
-                <OpdMedicineUpdate id={id} />
+                <OpdMedicineUpdate id={id} data={opd.given_medicine} onUpdate={(val) => handleLocalUpdate({ given_medicine: val })} />
               </div>
 
               {/* Additional Details - Stacked Compact Flow */}
               <div className="">
-                <OpdNextVisitUpdate id={id} />
-                <OpdNotesUpdate id={id} />
-                <OpdDietUpdate id={id} />
-                <OpdAdviceUpdate id={id} />
+                <OpdNextVisitUpdate id={id} data={opd.nextVisit} onUpdate={(val) => handleLocalUpdate({ nextVisit: val })} />
+                <OpdNotesUpdate id={id} data={opd.Note} onUpdate={(val) => handleLocalUpdate({ Note: val })} />
+                <OpdDietUpdate id={id} data={opd.suggested_diet} onUpdate={(val) => handleLocalUpdate({ suggested_diet: val })} />
+                <OpdAdviceUpdate id={id} data={opd.adviced} onUpdate={(val) => handleLocalUpdate({ adviced: val })} />
               </div>
 
               {/* Visit Pad Section - Integrated into bottom of form */}
@@ -99,13 +133,13 @@ export default function OpdUpdate() {
 
           {/* 3. Footer Summary (Finalizes the encounter) */}
           <div className="mt-6">
-            <OpdFooterSummary id={id} />
+            <OpdFooterSummary id={id} localOpd={opd} />
           </div>
         </div>
 
         {/* 4. Side Summary - Right Column */}
         <div className="w-full lg:w-80 shrink-0">
-          <OpdSummarySidebar id={id} />
+          <OpdSummarySidebar id={id} localOpd={opd} />
         </div>
       </div>
     </div>

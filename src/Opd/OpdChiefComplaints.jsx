@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { getOpdById, complaint, updateOpd, createComplaint, deleteOpdComplaint, updateOpdChiefComplaint } from "../services/opd.services";
+import { complaint, updateOpd, createComplaint } from "../services/opd.services";
 import { Trash2 } from "lucide-react";
 
-export default function OpdComplaintsUpdate({ id }) {
+export default function OpdComplaintsUpdate({ id, data, onUpdate }) {
 
-  const [opd, setOpd] = useState({ chief_complaints: [] });
   const [complaintList, setComplaintList] = useState(() => {
     const cached = localStorage.getItem("master_complaints");
     try {
@@ -49,44 +48,16 @@ export default function OpdComplaintsUpdate({ id }) {
   ];
 
   useEffect(() => {
-    fetchOpd();
     fetchComplaints();
-  }, [id]);
-
-  // Parse existing duration string to number and unit
-  useEffect(() => {
-    if (opd.chief_complaints.length > 0) {
-      const parsedComplaints = opd.chief_complaints.map(item => {
-        const { number, unit } = parseDuration(item.duration);
-        return {
-          ...item,
-          durationNumber: number,
-          durationUnit: unit
-        };
-      });
-      setOpd(prev => ({ ...prev, chief_complaints: parsedComplaints }));
-    }
-  }, [opd.chief_complaints.length]);
-
-  // Parse duration string into number and unit
-  const parseDuration = (duration) => {
-    if (!duration) return { number: "", unit: "" };
     
-    const match = duration.match(/^(\d+(?:\.\d+)?)\s*(hour|day|week|month|year|hours|days|weeks|months|years)s?$/i);
-    if (match) {
-      const number = match[1];
-      const rawUnit = match[2].toLowerCase();
-      
-      // Normalize unit to singular form
-      let unit = rawUnit;
-      if (rawUnit.endsWith('s')) {
-        unit = rawUnit.slice(0, -1);
-      }
-      
-      return { number, unit };
-    }
-    return { number: "", unit: "" };
-  };
+    // Listen for global save
+    const handleGlobalSave = async () => {
+        // Data is already in parent state via onUpdate
+        // The Footer handleSave will call updateOpd with all gathered data
+    };
+    window.addEventListener('opd_save_all_requested', handleGlobalSave);
+    return () => window.removeEventListener('opd_save_all_requested', handleGlobalSave);
+  }, []);
 
   // Generate duration suggestions
   const generateDurationSuggestions = (value) => {
@@ -115,7 +86,6 @@ export default function OpdComplaintsUpdate({ id }) {
     setDurationSuggestions(suggestions);
   };
 
-  // Handle duration input for add form
   const handleDurationInput = (value) => {
     setForm(prev => ({ ...prev, durationNumber: value }));
     setDurationHighlightIndex(-1);
@@ -129,7 +99,6 @@ export default function OpdComplaintsUpdate({ id }) {
     }
   };
 
-  // Select duration from dropdown for add form
   const selectDuration = (suggestion) => {
     setForm({
       ...form,
@@ -140,35 +109,7 @@ export default function OpdComplaintsUpdate({ id }) {
     setShowDurationDropdown(false);
   };
 
-  // 🔹 FETCH OPD
-  const fetchOpd = async () => {
-    try {
-      const res = await getOpdById(id);
-      const opdData = Array.isArray(res.data) ? res.data[0] : res.data;
-      
-      // Transform the data - Use chief_complaints not complaints_data
-      const transformedComplaints = (opdData?.chief_complaints || []).map((item, index) => ({
-        index: index,
-        duration: item.duration,
-        durationNumber: "",
-        durationUnit: "",
-        optional: item.optional,
-        complaints_data_id: item.complaints_data?.id,
-        complaints_data_name: item.complaints_data?.name
-      }));
-      
-      setOpd({
-        ...opdData,
-        chief_complaints: transformedComplaints,
-      });
-    } catch (error) {
-      console.error("Error fetching OPD:", error);
-    }
-  };
-
-  // 🔹 FETCH MASTER COMPLAINTS
   const fetchComplaints = async () => {
-    // Already initialized from cache in useState
     const cached = localStorage.getItem("master_complaints");
     if (!cached) {
       setIsComplaintsLoading(true);
@@ -176,29 +117,16 @@ export default function OpdComplaintsUpdate({ id }) {
 
     try {
       const res = await complaint();
-      let data = [];
-
-      if (Array.isArray(res)) {
-        data = res;
-      } else if (Array.isArray(res.results)) {
-        data = res.results;
-      } else if (Array.isArray(res.data)) {
-        data = res.data;
-      }
-
+      let data = Array.isArray(res) ? res : (res.results || res.data || []);
       setComplaintList(data);
-      // Update cache
       localStorage.setItem("master_complaints", JSON.stringify(data));
-      console.log("Complaint list loaded:", data.length);
     } catch (error) {
       console.error("Error fetching complaints:", error);
-      if (!cached) setComplaintList([]);
     } finally {
       setIsComplaintsLoading(false);
     }
   };
 
-  // 🔹 HANDLE SEARCH INPUT
   const handleSearchInput = (value) => {
     setForm({ ...form, complaints_data_name: value });
     setComplaintHighlightIndex(-1);
@@ -207,12 +135,10 @@ export default function OpdComplaintsUpdate({ id }) {
       const searchTerm = value.toLowerCase();
       const filtered = complaintList
         .filter(c => (c.name || "").toLowerCase().includes(searchTerm))
-        .slice(0, 50); // Limit to top 50 for instant performance
+        .slice(0, 50);
       
-      // Filter out duplicates by name
       const uniqueResults = [];
       const seenNames = new Set();
-      
       filtered.forEach(c => {
         const name = c.name?.toLowerCase().trim();
         if (name && !seenNames.has(name)) {
@@ -229,7 +155,6 @@ export default function OpdComplaintsUpdate({ id }) {
     }
   };
 
-  // 🔹 SELECT FROM DROPDOWN
   const selectComplaint = (complaint) => {
     setForm({
       ...form,
@@ -237,39 +162,26 @@ export default function OpdComplaintsUpdate({ id }) {
       complaints_data_id: complaint.id,
     });
     setShowDropdown(false);
-    // Focus on duration input after selecting complaint
     setTimeout(() => {
       durationInputRef.current?.focus();
     }, 100);
   };
 
-  // 🔹 FIND OR CREATE COMPLAINT
   const findOrCreateComplaint = async (name) => {
-    // Check if it exists locally
-    const existing = complaintList.find(
-      c => c.name.toLowerCase() === name.toLowerCase()
-    );
+    const existing = complaintList.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (existing) return { id: existing.id };
     
-    if (existing) {
-      return { id: existing.id, isNew: false };
-    }
-    
-    // Create new
     try {
-      const newComplaint = await createComplaint({ name });
-      const createdComplaint = newComplaint.data || newComplaint;
-      
-      // Add to local list
-      setComplaintList(prev => [...prev, createdComplaint]);
-      
-      return { id: createdComplaint.id, isNew: true };
+      const res = await createComplaint({ name });
+      const created = res.data || res;
+      setComplaintList(prev => [...prev, created]);
+      return { id: created.id };
     } catch (error) {
       console.error("Error creating complaint:", error);
       throw error;
     }
   };
 
-  // 🔹 KEYBOARD NAVIGATION HANDLERS
   const handleComplaintKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -281,9 +193,6 @@ export default function OpdComplaintsUpdate({ id }) {
       e.preventDefault();
       if (showDropdown && complaintHighlightIndex >= 0 && complaintHighlightIndex < searchResults.length) {
         selectComplaint(searchResults[complaintHighlightIndex]);
-      } else if (showDropdown && complaintHighlightIndex === searchResults.length) {
-        setShowDropdown(false);
-        durationInputRef.current?.focus();
       } else {
         durationInputRef.current?.focus();
       }
@@ -307,52 +216,25 @@ export default function OpdComplaintsUpdate({ id }) {
     }
   };
 
-  const handleKeyDown = (e, nextField) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent form submission
-      
-      switch(nextField) {
-        case 'add':
-          addButtonRef.current?.click();
-          // After adding, focus back to complaint input
-          setTimeout(() => {
-            complaintInputRef.current?.focus();
-          }, 100);
-          break;
-        default:
-          complaintInputRef.current?.focus();
-      }
-    }
-  };
-
-  // 🔹 ADD NEW COMPLAINT ENTRY
   const handleAdd = async () => {
     if (!form.complaints_data_name.trim()) {
-      alert("Please fill duration and complaint");
+      alert("Please enter complaint name");
       return;
     }
 
     try {
       setLoading({ add: true });
-
-      // Step 1: Get the ID (find existing or create new)
       const result = await findOrCreateComplaint(form.complaints_data_name);
       
-      // Step 2: Create new entry with ID
       const newEntry = {
         duration: form.duration,
         optional: form.optional || "",
-        complaints_data: result.id
+        complaints_data: { id: result.id, name: form.complaints_data_name }
       };
       
-      // Step 3: Create updated array by adding new entry to existing ones
+      const updatedList = [...(data || []), newEntry];
+      onUpdate(updatedList);
       
-      const updatedComplaints = [newEntry];
-      
-      // Step 4: Use updateOpd to update the entire chief_complaints array
-      await updateOpd(id, { chief_complaints: updatedComplaints });
-      
-      // Step 5: Reset form and refresh data
       setForm({
         duration: "",
         durationNumber: "",
@@ -366,9 +248,6 @@ export default function OpdComplaintsUpdate({ id }) {
       setDurationSuggestions([]);
       setShowDurationDropdown(false);
       
-      await fetchOpd();
-      window.dispatchEvent(new Event('opd_info_updated'));
-      
     } catch (error) {
       console.error("Error adding complaint:", error);
       alert("Failed to add complaint");
@@ -377,183 +256,84 @@ export default function OpdComplaintsUpdate({ id }) {
     }
   };
 
-  // 🔹 DELETE COMPLAINT ENTRY
-  const handleDelete = async (index) => {
-      try {
-        setLoading({ [index]: true });
-        
-        // Try using the specific delete endpoint first
-        await deleteOpdComplaint(id, index);
-        
-        // Refresh the list
-        await fetchOpd();
-        window.dispatchEvent(new Event('opd_info_updated'));
-        
-      } catch (error) {
-        console.error("Error deleting complaint:", error);
-        
-        // If specific delete fails, fallback to updateOpd
-        try {
-          // Create updated array without the deleted item
-          const updatedEntries = opd.chief_complaints
-            .filter((_, i) => i !== index)
-            .map(item => ({
-              duration: item.duration,
-              optional: item.optional || "",
-              complaints_data: item.complaints_data_id
-            }));
-          
-          await updateOpd(id, { chief_complaints: updatedEntries });
-          await fetchOpd();
-        } catch (fallbackError) {
-          alert("Failed to delete complaint");
-        }
-      } finally {
-        setLoading({ [index]: false });
-      }
+  const handleDelete = (index) => {
+    const updatedList = (data || []).filter((_, i) => i !== index);
+    onUpdate(updatedList);
   };
 
   return (
     <div className="w-full px-6 py-1">
-      {/* INLINE HEADER + ADD SECTION */}
-        <>
-            <div className="">
-            <div className="flex items-start gap-4">
-              {/* Title - inline */}
-              <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">Chief Complaints</h2>
-
-              {/* Input fields row */}
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
-                {/* Complaints Data Input with Dropdown */}
-                <div className="relative">
-                    <input
-                    ref={complaintInputRef}
-                    placeholder="Complaint name"
-                    value={form.complaints_data_name}
-                    onChange={(e) => handleSearchInput(e.target.value)}
-                    onKeyDown={handleComplaintKeyDown}
-                    onFocus={() => {
-                        handleSearchInput(form.complaints_data_name || "");
-                    }}
-                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                    className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                    autoFocus
-                    />
-                    
-                    {/* Dropdown Suggestions */}
-                    {showDropdown && searchResults.length > 0 && (
-                    <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-auto">
-                        {searchResults.map((c, index) => (
-                        <div
-                            key={c.id}
-                            onMouseDown={() => selectComplaint(c)}
-                            onMouseEnter={() => setComplaintHighlightIndex(index)}
-                            className={`px-4 py-2 cursor-pointer border-b last:border-b-0 ${complaintHighlightIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
-                        >
-                            <div className="font-medium text-sm">{c.name}</div>
-                        </div>
-                        ))}
-                    </div>
-                    )}
-
-                    {/* No results message */}
-                    {showDropdown && form.complaints_data_name && searchResults.length === 0 && !isComplaintsLoading && (
-                      <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-3">
-                        <div className="text-gray-500 text-sm">
-                          No matches found.
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Loading message */}
-                    {showDropdown && isComplaintsLoading && (
-                      <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-3">
-                        <div className="text-gray-500 text-sm flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                          Searching...
-                        </div>
-                      </div>
-                    )}
-                </div>
-                {/* Duration Input with Suggestions */}
-                <div className="relative">
-                  <input
-                    ref={durationInputRef}
-                    placeholder="Enter Duration"
-                    value={form.durationNumber}
-                    onChange={(e) => handleDurationInput(e.target.value)}
-                    onKeyDown={handleDurationKeyDown}
-                    onFocus={() => form.durationNumber && handleDurationInput(form.durationNumber)}
-                    onBlur={() => setTimeout(() => setShowDurationDropdown(false), 200)}
-                    className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                  
-                  {/* Duration Suggestions Dropdown */}
-                  {showDurationDropdown && durationSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {durationSuggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          onMouseDown={() => selectDuration(suggestion)}
-                          onMouseEnter={() => setDurationHighlightIndex(index)}
-                          className={`px-4 py-2 cursor-pointer border-b last:border-b-0 ${durationHighlightIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
-                        >
-                          <div className="font-medium">{suggestion.display}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Display selected duration */}
-                  {form.duration && (
-                    <div className="mt-1 text-sm text-gray-600">
-                      Selected: <span className="font-medium">{form.duration}</span>
-                    </div>
-                  )}
-                </div>
-               <div>
-                 <input
-                    ref={severityInputRef}
-                    placeholder="Severity (optional)"
-                    value={form.optional}
-                    onChange={(e) =>
-                    setForm({ ...form, optional: e.target.value })
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, 'add')}
-                    className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+        <div className="flex items-start gap-4">
+            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap pt-2 w-[140px] flex-shrink-0">Chief Complaints</h2>
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="relative">
+                <input
+                ref={complaintInputRef}
+                placeholder="Complaint name"
+                value={form.complaints_data_name}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onKeyDown={handleComplaintKeyDown}
+                onFocus={() => handleSearchInput(form.complaints_data_name || "")}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
-               </div>
-
-                {/* Add Button */}
-               <div>
-                <button
-                  ref={addButtonRef}
-                  onClick={handleAdd}
-                  disabled={loading.add}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAdd();
-                    }
-                  }}
-                  className="w-full bg-blue-400 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-blue-500 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading.add ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Adding...
-                    </>
-                  ) : (
-                    "Add"
-                  )}
-                </button>
-              </div>
-              </div>
+                {showDropdown && searchResults.length > 0 && (
+                <div className="absolute z-[999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-auto">
+                    {searchResults.map((c, index) => (
+                    <div
+                        key={c.id}
+                        onMouseDown={() => selectComplaint(c)}
+                        onMouseEnter={() => setComplaintHighlightIndex(index)}
+                        className={`px-4 py-2 cursor-pointer border-b last:border-b-0 ${complaintHighlightIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                    >
+                        <div className="font-medium text-sm">{c.name}</div>
+                    </div>
+                    ))}
+                </div>
+                )}
+            </div>
+            <div className="relative">
+                <input
+                ref={durationInputRef}
+                placeholder="Duration"
+                value={form.durationNumber}
+                onChange={(e) => handleDurationInput(e.target.value)}
+                onKeyDown={handleDurationKeyDown}
+                onBlur={() => setTimeout(() => setShowDurationDropdown(false), 200)}
+                className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+                {showDurationDropdown && durationSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+                    {durationSuggestions.map((suggestion, index) => (
+                    <div
+                        key={index}
+                        onMouseDown={() => selectDuration(suggestion)}
+                        onMouseEnter={() => setDurationHighlightIndex(index)}
+                        className={`px-4 py-2 cursor-pointer border-b last:border-b-0 ${durationHighlightIndex === index ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                    >
+                        <div className="font-medium">{suggestion.display}</div>
+                    </div>
+                    ))}
+                </div>
+                )}
+            </div>
+            <input
+                ref={severityInputRef}
+                placeholder="Severity"
+                value={form.optional}
+                onChange={(e) => setForm({ ...form, optional: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                className="border border-gray-300 rounded-xl px-4 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            />
+            <button
+                onClick={handleAdd}
+                disabled={loading.add}
+                className="w-full bg-blue-400 text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-blue-500 shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+                {loading.add ? "Adding..." : "Add"}
+            </button>
             </div>
         </div>
-
-        {/* LIST REMOVED - NOW IN SIDEBAR */}
-        </>
     </div>
   );
 }

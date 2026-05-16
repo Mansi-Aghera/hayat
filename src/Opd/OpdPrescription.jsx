@@ -89,6 +89,9 @@ const OpdPrescription = () => {
             max-width: 100% !important;
             margin: 0 !important;
             padding: 15mm !important;
+            min-height: 277mm !important; /* A4 height approx minus margins */
+            display: flex !important;
+            flex-direction: column !important;
           }
         }
 
@@ -146,7 +149,7 @@ const OpdPrescription = () => {
       </div>
 
       {/* ===== PRESCRIPTION CONTENT ===== */}
-      <div className="prescription-content bg-white shadow-sm border rounded-xl p-8 print:shadow-none print:border-none print:rounded-none">
+      <div className="prescription-content bg-white shadow-sm border rounded-xl p-8 min-h-[1050px] flex flex-col print:shadow-none print:border-none print:rounded-none">
         
         {/* 1. PATIENT HEADER BOX */}
         <div className="border border-black rounded-xl p-4 mb-8">

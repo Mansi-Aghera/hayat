@@ -4,7 +4,7 @@ import { getOpdById, updateOpd } from "../services/opd.services";
 import { getServices, createService } from "../services/service.services";
 import { useNavigate } from "react-router-dom";
 
-export default function OpdFooterSummary({ id }) {
+export default function OpdFooterSummary({ id, localOpd }) {
   const [loading, setLoading] = useState(false);
   const [opd, setOpd] = useState(null);
   const [services, setServices] = useState([]);
@@ -161,45 +161,46 @@ export default function OpdFooterSummary({ id }) {
     try {
       setLoading(true);
       
-      // Ensure all IDs are numbers and total_amount is a number for the API
-      // Backend requires prescription to NOT be blank
+      // 🔹 Transform complex objects back to IDs for the backend
+      const chiefComplaints = (localOpd.chief_complaints || []).map(c => ({
+        duration: c.duration,
+        optional: c.optional,
+        complaints_data: c.complaints_data?.id || c.complaints_data
+      }));
+
+      const pastHistory = (localOpd.past_history || []).map(h => ({
+        duration: h.duration,
+        past_history_data: h.past_history_data?.id || h.past_history_data
+      }));
+
       const payload = {
+        // Form fields (Services & Payment)
         service_id: form.service_ids.map(id => Number(id)),
         total_amount: parseFloat(form.total_amount),
         payment_mode: form.payment_mode,
         is_received: form.is_received,
-        prescription: form.prescription
+        prescription: form.prescription,
+
+        // Gathered from localOpd (Deferred saves)
+        chief_complaints: chiefComplaints,
+        past_history: pastHistory,
+        vitals: localOpd.vitals,
+        examination: localOpd.examination,
+        diagnosis_detail: localOpd.diagnosis_detail,
+        Note: localOpd.Note,
+        suggested_diet: localOpd.suggested_diet,
+        adviced: localOpd.adviced
       };
 
-      // 🔹 Trigger global save for other components (Vitals, Examination, etc.)
-      window.dispatchEvent(new Event('opd_save_all_requested'));
-
-      console.log("Saving OPD payload:", payload);
+      console.log("Saving full OPD payload:", payload);
       
       const response = await updateOpd(id, payload);
-      
-      // The API usually returns the updated object. 
-      // We handle both { data: {...} } and {...} structures.
       const updatedData = Array.isArray(response?.data) ? response.data[0] : (response?.data || response);
       
       if (updatedData) {
-        // Sync local state with the actual data returned by the server
-        setOpd(updatedData);
-        setForm(prev => ({
-          ...prev,
-          service_ids: (updatedData.service_id || []).map(s => s.id),
-          total_amount: (updatedData.total_amount || "0").toString(),
-          payment_mode: updatedData.payment_mode || "",
-          is_received: updatedData.is_received || 0,
-          prescription: updatedData.prescription || "",
-        }));
-        
-        window.dispatchEvent(new Event('opd_info_updated'));
         alert("Changes saved successfully!");
         navigate("/opd");
       } else {
-        // Fallback to re-fetching if response is empty
-        await fetchOpd();
         alert("Changes saved!");
         navigate("/opd");
       }
@@ -359,7 +360,7 @@ export default function OpdFooterSummary({ id }) {
             >
               <Printer size={16} /> Print Prescription
             </button>
-            <button onClick={() => fetchOpd()} className="px-6 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-bold text-[13px] transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-500/10">
+            <button onClick={() => navigate("/opd")} className="px-6 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 font-bold text-[13px] transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-500/10">
               <X size={16} /> Cancel
             </button>
             <button onClick={handleSave} disabled={loading} className="px-8 py-2 rounded-xl bg-blue-400 hover:bg-blue-500 text-white font-bold text-[13px] transition-all flex items-center gap-2 shadow-lg shadow-blue-100 disabled:opacity-50 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500/20">

@@ -16,7 +16,8 @@ export default function Home() {
       try {
         setLoading(true);
         const data = await getDoctors();
-        setDoctors(data.data || []);
+        // getDoctors returns the array directly now
+        setDoctors(Array.isArray(data) ? data : []);
         setError(null);
       } catch (err) {
         console.error("Error fetching doctors:", err);
@@ -65,11 +66,13 @@ export default function Home() {
   };
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gray-50 min-h-screen">
 
       {/* Doctors Section */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Our Doctors</h2>
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          Our Doctors
+        </h2>
 
         {loading ? (
           <div className="flex justify-center items-center h-40">
@@ -80,44 +83,47 @@ export default function Home() {
             {error}
           </div>
         ) : doctors.length === 0 ? (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500">
-            No doctors found
+          <div className="bg-white border border-gray-100 rounded-xl p-12 text-center shadow-sm">
+            <div className="text-gray-400 mb-2">
+               <User size={48} className="mx-auto opacity-20" />
+            </div>
+            <p className="text-gray-500 font-medium">No doctors found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {doctors.map((doctor) => (
               <div
                 key={doctor.id}
                 onClick={() => navigate(`/doctor-view/${doctor.id}`)}
-                className="bg-white border border-gray-200 rounded-lg p-5 hover:border-blue-500 hover:shadow-md transition-all"
+                className="bg-white border border-blue-100 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-center gap-5">
                   {/* Doctor Avatar/Icon */}
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User size={24} className="text-blue-600" />
+                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                    <User size={30} className="text-blue-500" />
                   </div>
                   
                   {/* Doctor Info */}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800">
-                      {doctor.name || doctor.doctor_name || `Dr. ${doctor.first_name} ${doctor.last_name}`}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg uppercase truncate">
+                      {doctor.name || doctor.doctor_name || `DR ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim()}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-blue-600 font-medium mt-0.5">
                       {doctor.specialization || doctor.speciality || 'General Physician'}
                     </p>
 
                     {/* Contact Info */}
-                    <div className="mt-3 space-y-1">
-                      {doctor.phone && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Phone size={12} />
-                          <span>{doctor.phone}</span>
+                    <div className="mt-4 space-y-2">
+                      {doctor.email && (
+                        <div className="flex items-center gap-2.5 text-gray-500 hover:text-blue-600 transition-colors">
+                          <Mail size={14} className="flex-shrink-0" />
+                          <span className="text-xs truncate font-medium">{doctor.email}</span>
                         </div>
                       )}
-                      {doctor.email && (
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Mail size={12} />
-                          <span className="truncate">{doctor.email}</span>
+                      {doctor.phone && (
+                        <div className="flex items-center gap-2.5 text-gray-500">
+                          <Phone size={14} className="flex-shrink-0" />
+                          <span className="text-xs font-medium">{doctor.phone}</span>
                         </div>
                       )}
                     </div>
